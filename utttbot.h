@@ -18,7 +18,7 @@ class UTTTBot {
 	std::string player_names[2];
 	std::string your_bot;
 	int your_botid;
-	bool firstMove = true;
+	bool firstMove = false;
 
 	int round;
 	State state;

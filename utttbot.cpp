@@ -82,7 +82,6 @@ void UTTTBot::update(std::string &key, std::string &value) {
 
 void UTTTBot::setting(std::string &key, std::string &value) {
 	if (key == "timebank") {
-	    firstMove = true;
 		timebank = std::stoi(value);
 	} else if (key == "time_per_move") {
 		time_per_move = std::stoi(value);
@@ -91,6 +90,9 @@ void UTTTBot::setting(std::string &key, std::string &value) {
 		player_names[0] = names[0];
 		player_names[1] = names[1];
 	} else if (key == "your_bot") {
+	    if(value == player_names[0]){
+            firstMove = true;
+	    }
 		your_bot = value;
 	} else if (key == "your_botid") {
 		your_botid = std::stoi(value);
@@ -178,9 +180,10 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
 			bestMoves.push_back(moves[i]);
 
 	if (bestMoves.empty()) std::cerr << "ERROR: Best moves list is empty!" << std::endl;
-	if (bestMove.x == -1 && bestMove.y == -1) std::cerr << "ERROR: Best move not found!" << std::endl;
 
-	bestMove = *select_randomly(bestMoves.begin(), bestMoves.end());
+    bestMove = *select_randomly(bestMoves.begin(), bestMoves.end());
+
+	if (bestMove.x == -1 && bestMove.y == -1) std::cerr << "ERROR: Best move not found!" << std::endl;
 
     std::cerr << "______________________________________________________________________________________________" << std::endl;
     std::cerr << "Search yields optimal column to do move: #" << bestMove << std::endl;
