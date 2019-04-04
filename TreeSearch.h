@@ -1,3 +1,5 @@
+// treesearch.h
+// Jeffrey Drost
 
 #ifndef TREESEARCH_H
 #define TREESEARCH_H

@@ -29,12 +29,13 @@ class UTTTBot {
 	void update(std::string &key, std::string &value);
 	void move(int timeout);
 	Move findBestMove(const State &state, const int &timeout);
-    Move findBestMicroMove(const State &state, const std::vector<Move> &bestMoves, const Player &me);
+    std::vector<Move>  findBestMicroMoves(const State &state, const std::vector<Move> &bestMoves, const Player &me);
 	static int EvaluateState(const State &state, const Player &player);
     static int EvaluateMicroState(const MicroState &state, const Player &player);
 	static std::vector<State> GetChildStates(const State &state);
     static MicroState GetMicroState(const State &state, const Move &move);
-    static int EvaluateNextPossibilities(const State &state, const Move &move);
+    static MicroState GetNextMicroState(const State &state, const Move &move);
+    static int EvaluateNextPossibilities(const MicroState &state, const Player &me);
 
 public:
 	void run();

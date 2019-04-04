@@ -26,6 +26,7 @@ struct State {
 				macroboard[r][c] = Player::Active;
 	}
 };
+
 using MicroState = std::array<Player, 9>;
 
 // used to get a random element from a container
