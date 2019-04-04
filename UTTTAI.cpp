@@ -235,10 +235,12 @@ std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::
 
 static std::array<std::array<Player, 9>, 9> ParseSubBoards(const std::array<std::array<Player, 9>, 9> &state)
 {
-    std::array<std::array<Player, 9>, 9> subBoards;
+    std::array<std::array<Player, 9>, 9> subBoards{};
 
     for(int x = 0; x < 3; x++)
         for(int y = 0; y < 3; y++)
             subBoards[y + x * 3] = uttt::GetSubBoard(state, x, y);
+
+    return subBoards;
 }
 
