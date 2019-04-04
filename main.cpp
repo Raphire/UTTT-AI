@@ -1,21 +1,20 @@
 // main.cpp
 // Aswin van Woudenberg
 
+#include "uttt.h"
 #include "utttbot.h"
-#include "ttt.h"
-#include <vector>
+#include "UTTTAI.h"
 
 void test()
 {
 	State s = State();
 	UTTTBot bot;
-	bot.findBestMove(s, 10000);
+	UTTTAI::FindBestMove(s, 200);
 }
 
 int main()
 {
-	test();
-
+	//test();
 	UTTTBot bot;
 	bot.run();
 

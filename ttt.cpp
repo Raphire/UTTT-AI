@@ -4,13 +4,11 @@
 
 #include "ttt.h"
 
-int ttt::EvaluateBoard(const Board &b, const Player &maximize)
-{
-    Player winner = GetWinner(b);
-    if(winner == Player::None) return 0;
-    if(winner == maximize) return 9 - PlayerCount(b, maximize); // Its best to win in the least turns possible
-    return -1; // Its better if opponent had to do many moves to win
-}
+int ttt::wins [8][3] = {
+    {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
+    {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
+    {0, 4, 8}, {2, 4, 6}
+};
 
 Player ttt::GetWinner(const Board &b)
 {
@@ -44,10 +42,12 @@ Player ttt::GetPlayer(const Board & b)
 {
     int x = PlayerCount(b, Player::X);
     int o = PlayerCount(b, Player::O);
-    int d = x - o;
 
-    if(d == 0) return Player::X;
+    if(x + o == 9) return Player::None;
+
+    int d = x - o;
     if(d > 0) return Player::O;
+
     return Player::X;
 }
 
@@ -79,7 +79,7 @@ int ttt::PlayerCount(const Board &b, const Player &p)
     return c;
 }
 
-Player ttt::IsWinnableBy(const Board &b)
+Player ttt::IsWinnableForPlayer(const Board &b)
 {
     if(GetWinner(b) != Player::None) return Player::None;
 
@@ -104,7 +104,18 @@ Player ttt::IsWinnableBy(const Board &b)
     return winnableBy;
 }
 
-bool ttt::IsGameOver(const Board &b) {
-    if(GetMoves(b).size() == 0) return true;
+bool ttt::IsGameOver(const Board &b)
+{
+    if(GetMoves(b).size() == 0)
+        return true;
     return false;
+}
+
+std::vector<int> ttt::GetCellsOccupiedByPlayer(const Board & b, const Player & p)
+{
+    std::vector<int> cells;
+    for(int c = 0; c < 9; c++)
+        if(b[c] == p) cells.push_back(c);
+
+    return cells;
 }

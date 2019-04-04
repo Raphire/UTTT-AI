@@ -38,7 +38,7 @@ std::ostream &operator<<(std::ostream& os, const Move &m) {
 	return os;
 }
 
-Player getCurrentPlayer(const State &state)
+Player uttt::getCurrentPlayer(const State &state)
 {
 	int countX = 0;
 	int countO = 0;
@@ -51,7 +51,7 @@ Player getCurrentPlayer(const State &state)
 	return (countX > countO ? Player::O : Player::X); 
 }
 
-Player getWinner(const State &state, int row, int col)
+Player uttt::getWinner(const State &state, int row, int col)
 {
 	for (int r=0; r<3; r++)
 		if (state.board[row*3+r][col*3] == state.board[row*3+r][col*3+1] && 
@@ -78,7 +78,7 @@ Player getWinner(const State &state, int row, int col)
 	return Player::None;
 }
 
-State doMove(const State &state, const Move &m)
+State uttt::doMove(const State &state, const Move &m)
 {
 	State result = state;
 
@@ -108,7 +108,7 @@ State doMove(const State &state, const Move &m)
 	return result; 
 }
 
-Player getWinner(const State &state)
+Player uttt::getWinner(const State &state)
 {
 	for (int r=0; r<3; r++)
 		if (state.macroboard[r][0] == state.macroboard[r][1] && 
@@ -131,7 +131,7 @@ Player getWinner(const State &state)
 	return Player::None;
 }
 
-std::vector<Move> getMoves(const State &state)
+std::vector<Move> uttt::getMoves(const State &state)
 {
 	std::vector<Move> moves;
 	if (getWinner(state) == Player::None) {
@@ -146,3 +146,38 @@ std::vector<Move> getMoves(const State &state)
 	return moves;
 }
 
+std::array<Player, 9> uttt::GetSubBoard(std::array<std::array<Player, 9>, 9> array, int i, int i1)
+{
+	std::array<Player, 9> b = std::array<Player, 9>();
+	for(int x = 0; x < 3; x++) for(int y = 0; y < 3; y++) b[x*3 + y] = array[i*3 + x][i1*3 + y];
+	return b;
+}
+
+int uttt::GetMicroMove(const Move &m)
+{
+	int microX = m.x % 3;
+	int microY = m.y % 3;
+	int pos = microX * microY + microY;
+	return pos;
+}
+
+std::array<Player, 9> uttt::GetNextSubBoard(std::array<std::array<Player, 9>, 9> array, int i, int i1)
+{
+    int x = i % 3;
+    int y = i1 % 3;
+
+    return GetSubBoard(array, x, y);
+}
+
+std::array<std::array<Player, 9>, 9> uttt::GetSubBoards(std::array<std::array<Player, 9>, 9> macroBoard)
+{
+	std::array<std::array<Player, 9>, 9> subBoards;
+	for(int x = 0; x < 9; x++)
+		for(int y = 0; y < 9; y++)
+		{
+			int boardNo = y / 3 + (x / 3) * 3;
+			int boardPos = y % 3 + (x % 3) * 3;
+			subBoards[boardNo][boardPos] = macroBoard[x][y];
+		}
+	return subBoards;
+}

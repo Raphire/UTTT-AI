@@ -11,8 +11,9 @@
 #include <iterator>
 #include <iostream>
 
-enum class Player { None, X, O, Active, Both };
 struct Move { int x, y; };
+enum class Player { None, X, O, Active, Both };
+
 struct State {
 	std::array<std::array<Player,9>,9> board;
 	std::array<std::array<Player,3>,3> macroboard;
@@ -45,10 +46,19 @@ Iter select_randomly(Iter start, Iter end) {
 std::ostream &operator<<(std::ostream& os, const Player &p);
 std::ostream &operator<<(std::ostream& os, const State &s);
 std::ostream &operator<<(std::ostream& os, const Move &m);
-Player getCurrentPlayer(const State &state);
-State doMove(const State &state, const Move &m);
-Player getWinner(const State &state);
-std::vector<Move> getMoves(const State &state);
 
+class uttt {
+public:
+    static Player getCurrentPlayer(const State &state);
+    static State doMove(const State &state, const Move &m);
+    static Player getWinner(const State &state);
+    static Player getWinner(const State &state, int row, int col);
+    static std::vector<Move> getMoves(const State &state);
+    static std::array<Player, 9> GetSubBoard(std::array<std::array<Player, 9>, 9> macroBoard, int i, int i1);
+    static std::array<std::array<Player, 9>, 9> GetSubBoards(std::array<std::array<Player, 9>, 9> macroBoard);
+    static std::array<Player, 9> GetNextSubBoard(std::array<std::array<Player, 9>, 9> array, int i, int i1);
+    static int GetMicroMove(const Move &m);
+
+};
 #endif // UTTT_H
 
