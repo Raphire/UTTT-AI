@@ -1,5 +1,5 @@
 // utttbot.cpp
-// Aswin van Woudenberg
+// Jeffrey Drost
 
 #include "utttbot.h"
 #include "TreeSearch.h"
@@ -28,8 +28,12 @@ void UTTTBot::run() {
 
 void UTTTBot::move(int timeout) {
     if(firstMove){
+        std::array<Move, 4> moves = {Move{4,3}, Move{5,4}, Move{3,4}, Move{4,5}};
         firstMove = false;
-        std::cout << "place_disc " << 4 << " " << 3 << std::endl;
+
+        Move r = *select_randomly(moves.begin(), moves.end());
+
+        std::cout << "place_disc " << r << std::endl;
     }else {
         Move m = findBestMove(state, timeout);
         std::cout << "place_disc " << m << std::endl;
@@ -118,7 +122,6 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
 
 	// Find all moves and rate them
 	Player me = getCurrentPlayer(state);
-	std::cerr << "player: " << me << std::endl;
 	std::vector<Move> moves = getMoves(state);
 	const int moveSize = moves.size();
 
@@ -134,8 +137,6 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
 		std::cerr << "Starting pass #" << searchDepth - INITIAL_SEARCH_DEPTH + 1 << " with a search depth of " << searchDepth << "." << std::endl;
 
 		bool searchTreeExhausted = true;
-
-		std::cerr << moves.size() << std::endl;
 
 		for (int i = 0; i < moves.size(); i++) {
 			bool fullMoveTreeEvaluated = true;
@@ -153,7 +154,7 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
 		if (searchTreeExhausted)
 		{
 			std::cerr << "Entire search tree was exhausted! Bot knows how this game will end if played perfectly by both sides." << std::endl;
-			//break;
+			break;
 		}
 		else std::cerr << "MiniMax did not find definite outcome for a perfectly played match..." << std::endl;
 		searchDepth++; // Increase search depth for next iteration.
@@ -168,10 +169,11 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
 	// Find the highest score amongst rated moves
 	int highestRating = moveRatings[0];
 	for (int i = 0; i < moves.size(); i++)
-		if (moveRatings[i] > highestRating) highestRating = moveRatings[i];
+		if (moveRatings[i] > highestRating)
+		    highestRating = moveRatings[i];
 
 	if (highestRating == -1)
-		std::cerr << "All examined moves result in a loss! Chances are i will lose." << std::endl;
+		std::cerr << "All examined moves result in a loss! Chances are I will lose." << std::endl;
 
 	// There might be multiple moves with the same -best score, put all of them in a list
 	std::vector<Move> bestMoves;
@@ -179,27 +181,48 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
 		if (moveRatings[i] == highestRating)
 			bestMoves.push_back(moves[i]);
 
-	if (bestMoves.empty()) std::cerr << "ERROR: Best moves list is empty!" << std::endl;
+	if (bestMoves.empty())
+	    std::cerr << "ERROR: Best moves list is empty!" << std::endl;
 
-    bestMove = *select_randomly(bestMoves.begin(), bestMoves.end());
-
-	if (bestMove.x == -1 && bestMove.y == -1) std::cerr << "ERROR: Best move not found!" << std::endl;
+	bestMove = findBestMicroMove(state, bestMoves, me);
 
     std::cerr << "______________________________________________________________________________________________" << std::endl;
     std::cerr << "Search yields optimal column to do move: #" << bestMove << std::endl;
     std::cerr << "Search for move finished in " << timeElapsed << " milliseconds." << std::endl;
-    std::cerr << "Awaiting next turn..." << std::endl;
     std::cerr << "______________________________________________________________________________________________" << std::endl << std::endl;
 
 	return bestMove; // Return highest-rating move
 }
 
-int UTTTBot::EvaluateState(const State & state, const Player & positive)
+Move UTTTBot::findBestMicroMove(const State &state, const std::vector<Move> &bestMoves, const Player &me){
+    int highestMicroRating = -1;
+    Move bestMove = Move{ -1,-1 };
+    int microRating;
+
+    for(Move move : bestMoves){
+        State child = doMove(state, move);
+        microRating = EvaluateMicroState(UTTTBot::GetMicroState(child, move), me);
+        microRating += EvaluateNextPossibilities(child, move);
+        if(microRating > highestMicroRating && microRating >= 0){
+            highestMicroRating = microRating;
+            bestMove = move;
+        }
+    }
+
+    if (bestMove.x == -1 && bestMove.y == -1) {
+        std::cerr << "ERROR: Best move not found!" << std::endl;
+        bestMove = *select_randomly(bestMoves.begin(), bestMoves.end());
+    }
+
+    return bestMove;
+}
+
+int UTTTBot::EvaluateState(const State &state, const Player &player)
 {
 	Player winner = getWinner(state);                           // Is there a winner?
-	if (winner == positive) return +1;						// Bot has won in evaluated state
-	if (winner == Player::None) return 0;						// No winner, rate state with heuristics
-	return -1;                                               // Opponent has won in evaluated state
+	if (winner == player) return +1;						    // Bot has won in evaluated state
+	if (winner == Player::None) return 0;						// No winner
+	return -1;                                                  // Opponent has won in evaluated state
 }
 
 std::vector<State> UTTTBot::GetChildStates(const State &state)
@@ -208,4 +231,52 @@ std::vector<State> UTTTBot::GetChildStates(const State &state)
 	std::vector<Move> moves = getMoves(state);
 	for (Move m : moves) children.push_back(doMove(state, m));
 	return children;
+}
+
+int UTTTBot::EvaluateMicroState(const MicroState &state, const Player &player)
+{
+    Player winner = getMicroWinner(state);                      // Is there a winner?
+    if (winner == player) return +1;						    // Bot has won in evaluated state
+    if (winner == Player::None) return 0;						// No winner
+    return -1;                                                  // Opponent has won in evaluated state
+}
+
+MicroState UTTTBot::GetMicroState(const State &state, const Move &move){
+    std::array<Player, 9> microState;
+    int xStart = move.x;
+    int yStart = move.y;
+    int i = 0;
+
+    while(xStart % 3 != 0 || xStart != 0)
+        xStart--;
+
+    while(yStart % 3 != 0 || yStart != 0)
+        yStart--;
+
+    for (int y = yStart; y < yStart + 3; y++) {
+        for (int x = xStart; x < xStart + 3; x++) {
+            microState[i] = state.board[x][y];
+            i++;
+        }
+    }
+
+
+    return microState;
+}
+
+int UTTTBot::EvaluateNextPossibilities(const State &state, const Move &move){
+    MicroState nextBoard = GetMicroState(state, move);
+
+    auto nextMoves = ttt::GetMoves(nextBoard);
+    if(nextMoves.size() == 0) return -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+    Player nextWinnableBy = ttt::IsWinnableBy(nextBoard);
+
+    // This board can still be won by both players, it is still of good use
+    if(nextWinnableBy == Player::Both) return 0;
+
+    // Someone can still win on this board, but sending the opponent here would be better than previous options
+    if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) return 1;
+
+    // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
+    if(nextWinnableBy == Player::None) return 2;
 }

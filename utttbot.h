@@ -1,5 +1,5 @@
 // utttbot.h
-// Aswin van Woudenberg
+// Jeffrey Drost
 
 #ifndef UTTTBOT_H
 #define UTTTBOT_H
@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "uttt.h"
+#include "ttt.h"
 
 class UTTTBot {
 	int timebank;
@@ -28,8 +29,12 @@ class UTTTBot {
 	void update(std::string &key, std::string &value);
 	void move(int timeout);
 	Move findBestMove(const State &state, const int &timeout);
-	static int EvaluateState(const State & state, const Player & positive);
-	static std::vector<State> GetChildStates(const State & state);
+    Move findBestMicroMove(const State &state, const std::vector<Move> &bestMoves, const Player &me);
+	static int EvaluateState(const State &state, const Player &player);
+    static int EvaluateMicroState(const MicroState &state, const Player &player);
+	static std::vector<State> GetChildStates(const State &state);
+    static MicroState GetMicroState(const State &state, const Move &move);
+    static int EvaluateNextPossibilities(const State &state, const Move &move);
 
 public:
 	void run();

@@ -1,6 +1,6 @@
 
-#ifndef C4TEST_TREESEARCH_H
-#define C4TEST_TREESEARCH_H
+#ifndef TREESEARCH_H
+#define TREESEARCH_H
 
 #include <vector>
 
@@ -16,7 +16,7 @@ public:
 
 };
 
-#endif //C4TEST_TREESEARCH_H
+#endif //TREESEARCH_H
 
 
 /// TreeSearch.tpp

@@ -1,5 +1,5 @@
 // uttt.cpp
-// Aswin van Woudenberg
+// Jeffrey Drost
 
 #include "uttt.h"
 
@@ -131,7 +131,7 @@ Player getWinner(const State &state)
 	return Player::None;
 }
 
-Player getChildWinner(const ChildState &state)
+Player getMicroWinner(const MicroState &state)
 {
     for (int r = 0; r < 3; r++)
         if (state[r * 3] == state[r * 3 + 1] && state[r * 3 + 1] == state[r * 3 + 2] && state[r * 3] != Player::None)

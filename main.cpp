@@ -1,5 +1,5 @@
 // main.cpp
-// Aswin van Woudenberg
+// Jeffrey Drost
 
 #include "utttbot.h"
 #include <vector>

@@ -1,5 +1,5 @@
 // uttt.h
-// Aswin van Woudenberg
+// Jeffrey Drost
 
 #ifndef UTTT_H
 #define UTTT_H
@@ -11,7 +11,7 @@
 #include <iterator>
 #include <iostream>
 
-enum class Player { None, X, O, Active };
+enum class Player { None, X, O, Active, Both };
 struct Move { int x, y; };
 struct State {
 	std::array<std::array<Player,9>,9> board;
@@ -26,7 +26,7 @@ struct State {
 				macroboard[r][c] = Player::Active;
 	}
 };
-using ChildState = std::array<Player, 9>;
+using MicroState = std::array<Player, 9>;
 
 // used to get a random element from a container
 template<typename Iter, typename RandomGenerator>
@@ -49,7 +49,7 @@ std::ostream &operator<<(std::ostream& os, const Move &m);
 Player getCurrentPlayer(const State &state);
 State doMove(const State &state, const Move &m);
 Player getWinner(const State &state);
-Player getChildWinner(const ChildState &state);
+Player getMicroWinner(const MicroState &state);
 std::vector<Move> getMoves(const State &state);
 
 #endif // UTTT_H
