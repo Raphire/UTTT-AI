@@ -11,7 +11,7 @@
 #include <iterator>
 #include <iostream>
 
-enum class Player { None, X, O, Active };
+enum class Player { None, X, O, Active, Both };
 struct Move { int x, y; };
 struct State {
 	std::array<std::array<Player,9>,9> board;
