@@ -28,16 +28,12 @@ void UTTTBot::run() {
 
 void UTTTBot::move(int timeout)
 {
-    if(firstMove) {
-        firstMove = false;
-        if(your_botid == 0) {
-			std::cout << "place_disc " << 4 << " " << 3 << std::endl; // Center win is best win
-			return;
-		}
-    }
+	std::cerr << "----------------------------------------" << std::endl;
+	std::cerr << "| Starting move search for round: " << round << ". |" << std::endl;
+	std::cerr << "----------------------------------------" << std::endl;
+
 	Move m = UTTTAI::FindBestMove(state, time_per_move);
 	std::cout << "place_disc " << m << std::endl;
-
 }
 
 void UTTTBot::update(std::string &key, std::string &value)

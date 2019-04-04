@@ -157,7 +157,7 @@ int uttt::GetMicroMove(const Move &m)
 {
 	int microX = m.x % 3;
 	int microY = m.y % 3;
-	int pos = microX * microY + microY;
+	int pos = microX + microY * 3;
 	return pos;
 }
 

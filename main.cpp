@@ -14,7 +14,7 @@ void test()
 
 int main()
 {
-	//test();
+	test();
 	UTTTBot bot;
 	bot.run();
 

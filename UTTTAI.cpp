@@ -66,11 +66,6 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
     Player me = uttt::getCurrentPlayer(state);
     std::vector<Move> moves = uttt::getMoves(state);
 
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-    std::cerr << "Starting move search for round: " << round << " as Player " <<  me << "." << std::endl;
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-
     // Edge cases...
     if (moves.empty()) std::cerr << "ERROR: Board appears to be full, yet AI is asked to pick a move!" << std::endl;
     if (moves.size() == 1) return moves[0]; // Might occur later in matches
