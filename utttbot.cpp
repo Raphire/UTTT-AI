@@ -321,11 +321,16 @@ MicroState UTTTBot::GetNextMicroState(const State &state, const Move &move){
 
 int UTTTBot::EvaluateNextPossibilities(const MicroState &state, const Player &me){
     MicroState nextBoard = state;
+    int tempScore = 0;
 
     auto nextMoves = ttt::GetMoves(nextBoard);
 
-    if(ttt::CloseWin(nextBoard, me, false)) return -2; //Making this move would allow the opponent to win the next microboard
-    if(ttt::CloseWin(nextBoard, me, true)) return -2; //Making this move would allow the opponent to block my win next microboard
+    if(ttt::CloseWin(nextBoard, me, true)) tempScore -= 2; //Making this move would allow the opponent to block my win next microboard
+    if(ttt::CloseWin(nextBoard, me, false)) tempScore -= 2; //Making this move would allow the opponent to win the next microboard
+
+    if(tempScore != 0){
+        return tempScore;
+    }
 
     if(nextMoves.size() == 0) return -3; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
     Player nextWinnableBy = ttt::IsWinnableBy(nextBoard);
