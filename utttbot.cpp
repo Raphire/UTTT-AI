@@ -327,12 +327,12 @@ int UTTTBot::EvaluateNextPossibilities(const MicroState &state, const Player &me
 
     if(ttt::CloseWin(nextBoard, me, true)) tempScore -= 2; //Making this move would allow the opponent to block my win next microboard
     if(ttt::CloseWin(nextBoard, me, false)) tempScore -= 2; //Making this move would allow the opponent to win the next microboard
+    if(nextMoves.size() == 0) tempScore -= 3; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
 
     if(tempScore != 0){
         return tempScore;
     }
 
-    if(nextMoves.size() == 0) return -3; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
     Player nextWinnableBy = ttt::IsWinnableBy(nextBoard);
 
     // This board can still be won by both players, it is still of good use
