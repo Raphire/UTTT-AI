@@ -3,14 +3,6 @@
 
 #include "ttt.h"
 
-int ttt::EvaluateBoard(const MicroState &b, const Player &maximize)
-{
-    Player winner = GetWinner(b);
-    if(winner == Player::None) return 0;
-    if(winner == maximize) return 9 - PlayerCount(b, maximize); // Its best to win in the least turns possible
-    return -1; // Its better if opponent had to do many moves to win
-}
-
 Player ttt::GetWinner(const MicroState &b)
 {
     // Horizontal
@@ -109,45 +101,6 @@ std::vector<int> ttt::GetMoves(const MicroState &b)
     return moves;
 }
 
-Player ttt::GetPlayer(const MicroState & b)
-{
-    int x = PlayerCount(b, Player::X);
-    int o = PlayerCount(b, Player::O);
-    int d = x - o;
-
-    if(d == 0) return Player::X;
-    if(d > 0) return Player::O;
-    return Player::X;
-}
-
-std::vector<MicroState> ttt::GetChildren(const MicroState &b)
-{
-    std::vector<MicroState> children = {};
-
-    std::vector<int> moves = GetMoves(b);
-    Player turn = GetPlayer(b);
-
-    for(int m = 0; m < moves.size(); m++)
-        children.push_back(DoMove(b, moves[m], turn));
-
-    return children;
-}
-
-MicroState ttt::DoMove(const MicroState &b, int &m, const Player &p)
-{
-    MicroState newBoard = b;
-    newBoard[m] = p;
-    return newBoard;
-}
-
-int ttt::PlayerCount(const MicroState &b, const Player &p)
-{
-    int c = 0;
-    for(int i = 0; i < 9; i++)
-        if(b[i] == p) c++;
-    return c;
-}
-
 Player ttt::IsWinnableBy(const MicroState &b)
 {
     if(GetWinner(b) != Player::None) return Player::None;
@@ -171,9 +124,4 @@ Player ttt::IsWinnableBy(const MicroState &b)
             else winnableBy = Player::X;
     }
     return winnableBy;
-}
-
-bool ttt::IsGameOver(const MicroState &b) {
-    if(GetMoves(b).size() == 0) return true;
-    return false;
 }

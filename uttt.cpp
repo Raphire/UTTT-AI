@@ -131,21 +131,6 @@ Player getWinner(const State &state)
 	return Player::None;
 }
 
-Player getMicroWinner(const MicroState &state)
-{
-    for (int r = 0; r < 3; r++)
-        if (state[r * 3] == state[r * 3 + 1] && state[r * 3 + 1] == state[r * 3 + 2] && state[r * 3] != Player::None)
-            return state[r * 3];
-    for (int c = 0; c < 3; c++)
-        if (state[0 + c] == state[3 + c] && state[3 + c] == state[6 + c] && state[0 + c] != Player::None)
-            return state[0 + c];
-    if (state[0] == state[4] && state[4] == state[8] && state[0] != Player::None)
-        return state[0];
-    if (state[2] == state[4] && state[4] == state[6] && state[2] != Player::None)
-        return state[2];
-    return Player::None;
-}
-
 std::vector<Move> getMoves(const State &state)
 {
 	std::vector<Move> moves;

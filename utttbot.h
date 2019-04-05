@@ -33,8 +33,7 @@ class UTTTBot {
 	static int EvaluateState(const State &state, const Player &player);
     static int EvaluateMicroState(const MicroState &state, const Player &player);
 	static std::vector<State> GetChildStates(const State &state);
-    static MicroState GetMicroState(const State &state, const Move &move);
-    static MicroState GetNextMicroState(const State &state, const Move &move);
+    static MicroState GetMicroState(const State &state, const Move &move, const bool getNext);
     static int EvaluateNextPossibilities(const MicroState &state, const Player &me);
 
 public:

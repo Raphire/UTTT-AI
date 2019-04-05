@@ -50,7 +50,6 @@ std::ostream &operator<<(std::ostream& os, const Move &m);
 Player getCurrentPlayer(const State &state);
 State doMove(const State &state, const Move &m);
 Player getWinner(const State &state);
-Player getMicroWinner(const MicroState &state);
 std::vector<Move> getMoves(const State &state);
 
 #endif // UTTT_H

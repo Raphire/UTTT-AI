@@ -28,10 +28,10 @@ void UTTTBot::run() {
 
 void UTTTBot::move(int timeout) {
     if(firstMove){
-        std::array<Move, 4> moves = {Move{4,3}, Move{5,4}, Move{3,4}, Move{4,5}};
+        std::array<Move, 4> startMoves = {Move{4,3}, Move{5,4}, Move{3,4}, Move{4,5}};
         firstMove = false;
 
-        Move r = *select_randomly(moves.begin(), moves.end());
+        Move r = *select_randomly(startMoves.begin(), startMoves.end());
 
         std::cout << "place_disc " << r << std::endl;
     }else {
@@ -187,16 +187,12 @@ Move UTTTBot::findBestMove(const State &state, const int &timeout)
     if(bestMoves.size() > 1) {
         secondaryBestMoves = findBestMicroMoves(state, bestMoves, me);
 
-        std::cerr << "Selecting bestmove" << std::endl;
-
         if (secondaryBestMoves.size() > 1)
             bestMove = *select_randomly(secondaryBestMoves.begin(), secondaryBestMoves.end());
         else if (secondaryBestMoves.size() == 1)
             bestMove = secondaryBestMoves[0];
         else
             std::cerr << "ERROR: Secondary Best moves list is empty!" << std::endl;
-
-        std::cerr << "Done selecting bestmove" << std::endl;
     }
 	else if (bestMoves.size() == 1)
 	    bestMove = bestMoves[0];
@@ -227,9 +223,12 @@ std::vector<Move>  UTTTBot::findBestMicroMoves(const State &state, const std::ve
     for(Move move : bestMoves){
         State child = doMove(state, move);
         std::cerr << "move: " << move << std::endl;
-        microRating = EvaluateMicroState(UTTTBot::GetMicroState(child, move), me);
-        std::cerr << "microscore: " << microRating << std::endl;
-        microRating += EvaluateNextPossibilities(UTTTBot::GetNextMicroState(child, move), me);
+        microRating = EvaluateMicroState(UTTTBot::GetMicroState(child, move, false), me);
+        std::cerr << "microscore1: " << microRating << std::endl;
+        microRating += EvaluateNextPossibilities(UTTTBot::GetMicroState(child, move, true), me);
+        std::cerr << "microscore2: " << microRating << std::endl;
+        if(ttt::CloseWin(UTTTBot::GetMicroState(state, move, false), me, true))
+            microRating += 1;
         std::cerr << "totalscore: " << microRating << std::endl;
         if(microRating > highestMicroRating){
             highestMicroRating = microRating;
@@ -252,85 +251,33 @@ std::vector<Move>  UTTTBot::findBestMicroMoves(const State &state, const std::ve
 int UTTTBot::EvaluateState(const State &state, const Player &player)
 {
 	Player winner = getWinner(state);                           // Is there a winner?
-	if (winner == player) return +4;						    // Bot has won in evaluated state
+	if (winner == player) return +5;						    // Bot has won in evaluated state
 	if (winner == Player::None) return 0;						// No winner
-	return -4;                                                  // Opponent has won in evaluated state
-}
-
-std::vector<State> UTTTBot::GetChildStates(const State &state)
-{
-	std::vector<State> children;
-	std::vector<Move> moves = getMoves(state);
-	for (Move m : moves) children.push_back(doMove(state, m));
-	return children;
+	return -5;                                                  // Opponent has won in evaluated state
 }
 
 int UTTTBot::EvaluateMicroState(const MicroState &state, const Player &player)
 {
     Player winner = ttt::GetWinner(state);                      // Is there a winner?
-    if (winner == player) return +4;						    // Bot has won in evaluated state
+    if (winner == player) return +5;						    // Bot has won in evaluated state
     Player possibleWinner = ttt::IsWinnableBy(state);
     if(possibleWinner != player && possibleWinner != Player::Both) return -4;
     if (winner == Player::None) return 0;						// No winner
-    return -4;                                                  // Opponent has won in evaluated state
-}
-
-MicroState UTTTBot::GetMicroState(const State &state, const Move &move){
-    std::array<Player, 9> microState;
-    int xStart = move.y / 3;
-    int yStart = move.x / 3;
-    int i = 0;
-
-    //std::cerr << "macroboard: " << yStart << xStart << std::endl;
-
-    xStart *= 3;
-    yStart *= 3;
-
-    for (int x = xStart; x < xStart + 3; x++) {
-        for (int y = yStart; y < yStart + 3; y++) {
-            microState[i] = state.board[x][y];
-            //std::cerr << "micro " << i << state.board[x][y] << std::endl;
-            i++;
-        }
-    }
-
-    return microState;
-}
-
-MicroState UTTTBot::GetNextMicroState(const State &state, const Move &move){
-    std::array<Player, 9> microState;
-    int xStart = move.y % 3;
-    int yStart = move.x % 3;
-    int i = 0;
-
-    //std::cerr << "nextmacroboard: " << yStart << xStart << std::endl;
-
-    xStart *= 3;
-    yStart *= 3;
-
-    for (int x = xStart; x < xStart + 3; x++) {
-        for (int y = yStart; y < yStart + 3; y++) {
-            microState[i] = state.board[x][y];
-            //std::cerr << "nextmicro " << i << state.board[x][y] << std::endl;
-            i++;
-        }
-    }
-
-    return microState;
+    return -5;                                                  // Opponent has won in evaluated state
 }
 
 int UTTTBot::EvaluateNextPossibilities(const MicroState &state, const Player &me){
     MicroState nextBoard = state;
-    int tempScore = 0;
+    int score = 0;
 
     auto nextMoves = ttt::GetMoves(nextBoard);
 
-    if(ttt::CloseWin(nextBoard, me, true)) tempScore -= 2; //Making this move would allow the opponent to block my win next microboard
-    if(ttt::CloseWin(nextBoard, me, false)) tempScore -= 2; //Making this move would allow the opponent to win the next microboard
-    if(nextMoves.size() == 0) tempScore -= 3; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+    if(ttt::CloseWin(nextBoard, me, true)) score -= 2; //Making this move would allow the opponent to block my win next microboard
+    if(ttt::CloseWin(nextBoard, me, false)) score -= 2; //Making this move would allow the opponent to win the next microboard
+    if(nextMoves.size() == 0) score -= 4; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
 
-    if(tempScore != 0){
-        return tempScore;
+    if(score != 0){
+        return score;
     }
 
     Player nextWinnableBy = ttt::IsWinnableBy(nextBoard);
@@ -342,5 +289,40 @@ int UTTTBot::EvaluateNextPossibilities(const MicroState &state, const Player &me
     if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) return 1;
 
     // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-    if(nextWinnableBy == Player::None) return 2;
+    if(nextWinnableBy == Player::None) return 3;
+}
+
+std::vector<State> UTTTBot::GetChildStates(const State &state)
+{
+    std::vector<State> children;
+    std::vector<Move> moves = getMoves(state);
+    for (Move m : moves) children.push_back(doMove(state, m));
+    return children;
+}
+
+MicroState UTTTBot::GetMicroState(const State &state, const Move &move, bool getNext){
+    std::array<Player, 9> microState;
+    int xStart;
+    int yStart;
+
+    if(!getNext) {
+        xStart = (move.y / 3) * 3;
+        yStart = (move.x / 3) * 3;
+    }
+    else {
+        xStart = (move.y % 3) * 3;
+        yStart = (move.x % 3) * 3;
+    }
+
+    int i = 0;
+
+    for (int x = xStart; x < xStart + 3; x++) {
+        for (int y = yStart; y < yStart + 3; y++) {
+            microState[i] = state.board[x][y];
+            //std::cerr << "micro " << i << state.board[x][y] << std::endl;
+            i++;
+        }
+    }
+
+    return microState;
 }
