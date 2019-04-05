@@ -12,7 +12,7 @@ public:
     static std::vector<int> GetMoves(const MicroState & b);
     static std::vector<MicroState> GetChildren(const MicroState & b);
     static Player GetWinner(const MicroState & b);
-    static bool CloseWin(const MicroState & b, const Player &me);
+    static bool CloseWin(const MicroState & b, const Player &me, const bool myWin);
     static Player GetPlayer(const MicroState & b);
     static int PlayerCount(const MicroState & b, const Player & p);
     static bool IsGameOver(const MicroState & b);

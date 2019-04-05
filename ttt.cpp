@@ -30,39 +30,74 @@ Player ttt::GetWinner(const MicroState &b)
     return  Player::None;
 }
 
-bool ttt::CloseWin(const MicroState &b, const Player &me)
+bool ttt::CloseWin(const MicroState &b, const Player &me , const bool myWin)
 {
-    // Horizontal
-    if(b[0] == b[1] && b[2] == Player::None && b[0] != Player::None && b[0] != me) return true;
-    if(b[3] == b[4] && b[5] == Player::None && b[3] != Player::None && b[3] != me) return true;
-    if(b[6] == b[7] && b[7] == Player::None && b[6] != Player::None && b[6] != me) return true;
-    if(b[0] == b[2] && b[1] == Player::None && b[0] != Player::None && b[0] != me) return true;
-    if(b[3] == b[5] && b[4] == Player::None && b[3] != Player::None && b[3] != me) return true;
-    if(b[6] == b[8] && b[7] == Player::None && b[6] != Player::None && b[6] != me) return true;
-    if(b[1] == b[2] && b[0] == Player::None && b[1] != Player::None && b[1] != me) return true;
-    if(b[4] == b[5] && b[3] == Player::None && b[4] != Player::None && b[4] != me) return true;
-    if(b[7] == b[8] && b[6] == Player::None && b[7] != Player::None && b[7] != me) return true;
+    if(myWin){
+        // Horizontal
+        if(b[0] == b[1] && b[2] == Player::None && b[0] == me) return true;
+        if(b[3] == b[4] && b[5] == Player::None && b[3] == me) return true;
+        if(b[6] == b[7] && b[7] == Player::None && b[6] == me) return true;
+        if(b[0] == b[2] && b[1] == Player::None && b[0] == me) return true;
+        if(b[3] == b[5] && b[4] == Player::None && b[3] == me) return true;
+        if(b[6] == b[8] && b[7] == Player::None && b[6] == me) return true;
+        if(b[1] == b[2] && b[0] == Player::None && b[1] == me) return true;
+        if(b[4] == b[5] && b[3] == Player::None && b[4] == me) return true;
+        if(b[7] == b[8] && b[6] == Player::None && b[7] == me) return true;
 
-    // Vertical
-    if(b[0] == b[3] && b[6] == Player::None && b[0] != Player::None && b[0] != me) return true;
-    if(b[1] == b[4] && b[7] == Player::None && b[1] != Player::None && b[1] != me) return true;
-    if(b[2] == b[5] && b[8] == Player::None && b[2] != Player::None && b[2] != me) return true;
-    if(b[0] == b[6] && b[3] == Player::None && b[0] != Player::None && b[0] != me) return true;
-    if(b[1] == b[7] && b[4] == Player::None && b[1] != Player::None && b[1] != me) return true;
-    if(b[2] == b[8] && b[5] == Player::None && b[2] != Player::None && b[2] != me) return true;
-    if(b[3] == b[6] && b[0] == Player::None && b[3] != Player::None && b[3] != me) return true;
-    if(b[4] == b[7] && b[1] == Player::None && b[4] != Player::None && b[4] != me) return true;
-    if(b[5] == b[8] && b[2] == Player::None && b[5] != Player::None && b[5] != me) return true;
+        // Vertical
+        if(b[0] == b[3] && b[6] == Player::None && b[0] == me) return true;
+        if(b[1] == b[4] && b[7] == Player::None && b[1] == me) return true;
+        if(b[2] == b[5] && b[8] == Player::None && b[2] == me) return true;
+        if(b[0] == b[6] && b[3] == Player::None && b[0] == me) return true;
+        if(b[1] == b[7] && b[4] == Player::None && b[1] == me) return true;
+        if(b[2] == b[8] && b[5] == Player::None && b[2] == me) return true;
+        if(b[3] == b[6] && b[0] == Player::None && b[3] == me) return true;
+        if(b[4] == b[7] && b[1] == Player::None && b[4] == me) return true;
+        if(b[5] == b[8] && b[2] == Player::None && b[5] == me) return true;
 
-    // Diagonal
-    if(b[0] == b[4] && b[8] == Player::None && b[0] != Player::None && b[0] != me) return true;
-    if(b[2] == b[4] && b[6] == Player::None && b[2] != Player::None && b[2] != me) return true;
-    if(b[4] == b[8] && b[0] == Player::None && b[4] != Player::None && b[4] != me) return true;
-    if(b[4] == b[6] && b[2] == Player::None && b[4] != Player::None && b[4] != me) return true;
-    if(b[8] == b[0] && b[4] == Player::None && b[8] != Player::None && b[8] != me) return true;
-    if(b[6] == b[2] && b[4] == Player::None && b[6] != Player::None && b[6] != me) return true;
+        // Diagonal
+        if(b[0] == b[4] && b[8] == Player::None && b[0] == me) return true;
+        if(b[2] == b[4] && b[6] == Player::None && b[2] == me) return true;
+        if(b[4] == b[8] && b[0] == Player::None && b[4] == me) return true;
+        if(b[4] == b[6] && b[2] == Player::None && b[4] == me) return true;
+        if(b[8] == b[0] && b[4] == Player::None && b[8] == me) return true;
+        if(b[6] == b[2] && b[4] == Player::None && b[6] == me) return true;
 
-    return false;
+        return false;
+    }
+    else{
+        // Horizontal
+        if(b[0] == b[1] && b[2] == Player::None && b[0] != Player::None && b[0] != me) return true;
+        if(b[3] == b[4] && b[5] == Player::None && b[3] != Player::None && b[3] != me) return true;
+        if(b[6] == b[7] && b[7] == Player::None && b[6] != Player::None && b[6] != me) return true;
+        if(b[0] == b[2] && b[1] == Player::None && b[0] != Player::None && b[0] != me) return true;
+        if(b[3] == b[5] && b[4] == Player::None && b[3] != Player::None && b[3] != me) return true;
+        if(b[6] == b[8] && b[7] == Player::None && b[6] != Player::None && b[6] != me) return true;
+        if(b[1] == b[2] && b[0] == Player::None && b[1] != Player::None && b[1] != me) return true;
+        if(b[4] == b[5] && b[3] == Player::None && b[4] != Player::None && b[4] != me) return true;
+        if(b[7] == b[8] && b[6] == Player::None && b[7] != Player::None && b[7] != me) return true;
+
+        // Vertical
+        if(b[0] == b[3] && b[6] == Player::None && b[0] != Player::None && b[0] != me) return true;
+        if(b[1] == b[4] && b[7] == Player::None && b[1] != Player::None && b[1] != me) return true;
+        if(b[2] == b[5] && b[8] == Player::None && b[2] != Player::None && b[2] != me) return true;
+        if(b[0] == b[6] && b[3] == Player::None && b[0] != Player::None && b[0] != me) return true;
+        if(b[1] == b[7] && b[4] == Player::None && b[1] != Player::None && b[1] != me) return true;
+        if(b[2] == b[8] && b[5] == Player::None && b[2] != Player::None && b[2] != me) return true;
+        if(b[3] == b[6] && b[0] == Player::None && b[3] != Player::None && b[3] != me) return true;
+        if(b[4] == b[7] && b[1] == Player::None && b[4] != Player::None && b[4] != me) return true;
+        if(b[5] == b[8] && b[2] == Player::None && b[5] != Player::None && b[5] != me) return true;
+
+        // Diagonal
+        if(b[0] == b[4] && b[8] == Player::None && b[0] != Player::None && b[0] != me) return true;
+        if(b[2] == b[4] && b[6] == Player::None && b[2] != Player::None && b[2] != me) return true;
+        if(b[4] == b[8] && b[0] == Player::None && b[4] != Player::None && b[4] != me) return true;
+        if(b[4] == b[6] && b[2] == Player::None && b[4] != Player::None && b[4] != me) return true;
+        if(b[8] == b[0] && b[4] == Player::None && b[8] != Player::None && b[8] != me) return true;
+        if(b[6] == b[2] && b[4] == Player::None && b[6] != Player::None && b[6] != me) return true;
+
+        return false;
+    }
 }
 
 std::vector<int> ttt::GetMoves(const MicroState &b)
