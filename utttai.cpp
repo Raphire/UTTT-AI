@@ -9,8 +9,6 @@ Move UTTTAI::findBestMove(const State &state, const int &timeout, const int &tim
     auto turnStartTime = std::chrono::steady_clock::now();
     int timeElapsed;
     Move bestMove = Move{ -1, -1};
-
-    // Find all moves and rate them
     Player me = getCurrentPlayer(state);
     std::vector<Move> moves = getMoves(state);
     const int moveSize = moves.size();
@@ -40,7 +38,6 @@ Move UTTTAI::findBestMove(const State &state, const int &timeout, const int &tim
             else std::cerr << "Exhausted search tree of move #" << i << "." << std::endl;
         }
         std::cerr << "Finished pass #" << searchDepth - INITIAL_SEARCH_DEPTH + 1 << "." << std::endl;
-        //std::cerr << "Time elapsed: " << match.timeElapsedThisTurn() << "/" << match.time_per_move << " ms." << std::endl;
         if (searchTreeExhausted)
         {
             std::cerr << "Entire search tree was exhausted! Bot knows how this game will end if played perfectly by both sides." << std::endl;
@@ -105,11 +102,11 @@ Move UTTTAI::findBestMove(const State &state, const int &timeout, const int &tim
 }
 
 std::vector<Move>  UTTTAI::findBestMicroMoves(const State &state, const std::vector<Move> &bestMoves, const Player &me){
+    std::vector<Move> secondaryBestMoves;
     int highestMicroRating = -999;
+    int microRating;
     auto turnStartTime = std::chrono::steady_clock::now();
     int timeElapsed;
-    std::vector<Move> secondaryBestMoves;
-    int microRating;
 
     for(Move move : bestMoves){
         State child = doMove(state, move);
@@ -149,12 +146,12 @@ int UTTTAI::EvaluateState(const State &state, const Player &player)
 
 int UTTTAI::EvaluateMicroState(const MicroState &state, const Player &player)
 {
-    Player winner = ttt::GetWinner(state);                      // Is there a winner?
-    if (winner == player) return +5;						    // Bot has won in evaluated state
+    Player winner = ttt::GetWinner(state);                                          // Is there a winner?
+    if (winner == player) return +5;						                        // Bot has won in evaluated state
     Player possibleWinner = ttt::IsWinnableBy(state);
-    if(possibleWinner != player && possibleWinner != Player::Both) return -4;
-    if (winner == Player::None) return 0;						// No winner
-    return -5;                                                  // Opponent has won in evaluated state
+    if (winner == Player::None) return 0;						                    // No winner
+    if(possibleWinner != player && possibleWinner != Player::Both) return -3;       // This microstate can only be won by the enemy
+    return -5;                                                                      // Opponent has won in evaluated state
 }
 
 int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me){
@@ -163,9 +160,9 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
 
     auto nextMoves = ttt::GetMoves(nextBoard);
 
-    if(ttt::CloseWin(nextBoard, me, true)) score -= 2; //Making this move would allow the opponent to block my win next microboard
-    if(ttt::CloseWin(nextBoard, me, false)) score -= 2; //Making this move would allow the opponent to win the next microboard
-    if(nextMoves.size() == 0) score -= 4; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+    if(ttt::CloseWin(nextBoard, me, true)) score -= 2;      // Making this move would allow the opponent to block my win next microboard
+    if(ttt::CloseWin(nextBoard, me, false)) score -= 2;     // Making this move would allow the opponent to win the next microboard
+    if(nextMoves.size() == 0) score -= 4;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
 
     if(score != 0){
         return score;
@@ -210,7 +207,6 @@ MicroState UTTTAI::GetMicroState(const State &state, const Move &move, bool getN
     for (int x = xStart; x < xStart + 3; x++) {
         for (int y = yStart; y < yStart + 3; y++) {
             microState[i] = state.board[x][y];
-            //std::cerr << "micro " << i << state.board[x][y] << std::endl;
             i++;
         }
     }

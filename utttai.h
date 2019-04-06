@@ -11,9 +11,6 @@
 #define INITIAL_SEARCH_DEPTH 1
 
 class UTTTAI {
-
-    std::chrono::time_point<std::chrono::steady_clock> turnStartTime;
-
     static std::vector<Move> findBestMicroMoves(const State &state, const std::vector<Move> &bestMoves, const Player &me);
 
     static int EvaluateState(const State &state, const Player &player);
