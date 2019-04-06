@@ -81,9 +81,11 @@ int ttt::PlayerCount(const Board &b, const Player &p)
 
 Player ttt::IsWinnableForPlayer(const Board &b)
 {
-    if(GetWinner(b) != Player::None) return Player::None;
+    Player winner = GetWinner(b);
+    if(winner != Player::None) return winner;
 
     Player winnableBy = Player::None;
+
     int wins[8][3] = {
             {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
             {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
@@ -119,3 +121,5 @@ std::vector<int> ttt::GetCellsOccupiedByPlayer(const Board & b, const Player & p
 
     return cells;
 }
+
+

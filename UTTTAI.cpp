@@ -3,16 +3,17 @@
 //
 
 #include <chrono>
+#include <algorithm>
 #include "UTTTAI.h"
 #include "uttt.h"
 #include "ttt.h"
 #include "TreeSearch.h"
 #include "TTTAI.h"
 
-int UTTTAI::EvaluateState(const State & state, const Player & positive)
+int UTTTAI::EvaluateState(const State & state)
 {
-    Player winner = uttt::getWinner(state);                           // Is there a winner?
-    if (winner == positive) return +1;						// Bot has won in evaluated state
+    Player winner = state.winner;                           // Is there a winner?
+    if (winner == state.player) return +1;						// Bot has won in evaluated state
     if (winner == Player::None) return 0;						// No winner, rate state with heuristics
     return -1;                                               // Opponent has won in evaluated state
 }
@@ -21,15 +22,18 @@ std::vector<State> UTTTAI::GetChildStates(const State &state)
 {
     std::vector<State> children;
     std::vector<Move> moves = uttt::getMoves(state);
-    for (Move m : moves) children.push_back(uttt::doMove(state, m));
+
+    for (Move m : moves)
+        children.push_back(uttt::doMove(state, m));
+
     return children;
 }
 
-int UTTTAI::RateByPosition(const Move & move, const std::array<std::array<Player, 9>, 9> & b)
+int UTTTAI::RateByPosition(const Move & move, const State & state)
 {
     int m = uttt::GetMicroMove(move);
 
-    std::array<Player, 9> nextBoard = uttt::GetNextSubBoard(b, move.x, move.y);
+    std::array<Player, 9> nextBoard = state.subBoards[(move.x % 3) + 3 * (move.y % 3)];
 
     auto nextMoves = ttt::GetMoves(nextBoard);
     if(nextMoves.size() == 0) return -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
@@ -45,13 +49,13 @@ int UTTTAI::RateByPosition(const Move & move, const std::array<std::array<Player
     if(nextWinnableBy == Player::None) return 2;
 }
 
-int UTTTAI::RateByMacrogameFieldValue(Move &move, std::array<std::array<Player, 9>, 9> array)
+int UTTTAI::RateByMacrogameFieldValue(const Move & move, const State & state)
 {
     std::array<int, 9> potentialWins = {{3, 2, 3, 2, 4, 2, 3, 2, 3}}; // basically monte carlo in a single line for ttt
 
     // Send opponent to macro field with least amount of potential wins
-    int microMove = uttt::GetMicroMove(move);
-    int score = -potentialWins[microMove];
+    int subMove = move.x % 3 + 3 * (move.y % 3);
+    int score = -potentialWins[subMove];
 
     return score;
 }
@@ -60,154 +64,272 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
 {
     auto turnStartTime = std::chrono::steady_clock::now();
     long long int timeElapsed;
-    const std::array<Board, 9> subBoards = ParseSubBoards(state.board);
 
-    // Find all moves and rate them
-    Player me = uttt::getCurrentPlayer(state);
+    std::cerr << state << std::endl;
+
+    std::vector<SelectionStage> selectionStages;
+
+    selectionStages.push_back({
+       "MiniMaxAB",
+       100,
+       RateMovesWithMiniMaxAB
+    });
+
+    selectionStages.push_back({
+        "TTT strategies",
+        100,
+        RateMovesWithTTTStrats
+    });
+
+    selectionStages.push_back({
+        "Position rating",
+        100,
+        RateMovesWithPosition
+    });
+
+    selectionStages.push_back({
+        "Next board position",
+        100,
+        RateMovesWithNextBoardPosition
+    });
+
     std::vector<Move> moves = uttt::getMoves(state);
+    std::vector<int> moveRatings;
+    std::vector<Move> bestMoves = moves;
+
+    std::cerr << "Starting assessment of current game-state: " << std::endl;
+
+    std::vector<int> relevantMacroIndicesOffensive;
+    std::vector<int> relevantMacroIndicesDefensive;
+
+    Player potentialWinners = Player::None;
+
+    std::array<Player, 9> potentialSubBoardWinners;
+    for(int b = 0; b < state.subBoards.size(); b++)
+        potentialSubBoardWinners[b] = ttt::IsWinnableForPlayer(state.subBoards[b]);
+
+    for(int w = 0; w < 8; w++)
+    {
+        Player a = potentialSubBoardWinners[ttt::wins[w][0]];
+        Player b = potentialSubBoardWinners[ttt::wins[w][1]];
+        Player c = potentialSubBoardWinners[ttt::wins[w][2]];
+
+        if(a == Player::None || b == Player::None || c == Player::None) continue; // a, b or c is never None after this point
+        if(a == b && a == c && a == Player::Both) {
+            potentialWinners = Player::Both;
+
+            relevantMacroIndicesOffensive.push_back(ttt::wins[w][0]);
+            relevantMacroIndicesOffensive.push_back(ttt::wins[w][1]);
+            relevantMacroIndicesOffensive.push_back(ttt::wins[w][2]);
+
+            relevantMacroIndicesDefensive.push_back(ttt::wins[w][0]);
+            relevantMacroIndicesDefensive.push_back(ttt::wins[w][1]);
+            relevantMacroIndicesDefensive.push_back(ttt::wins[w][2]);
+        }
+        else if((a == Player::X || a == Player::Both) && (b == Player::X || b == Player::Both) && (c == Player::X || c == Player::Both)) {
+            if(state.player == Player::X) {
+                relevantMacroIndicesOffensive.push_back(ttt::wins[w][0]);
+                relevantMacroIndicesOffensive.push_back(ttt::wins[w][1]);
+                relevantMacroIndicesOffensive.push_back(ttt::wins[w][2]);
+            } else {
+                relevantMacroIndicesDefensive.push_back(ttt::wins[w][0]);
+                relevantMacroIndicesDefensive.push_back(ttt::wins[w][1]);
+                relevantMacroIndicesDefensive.push_back(ttt::wins[w][2]);
+            }
+
+            if(potentialWinners == Player::O) potentialWinners = Player::Both;
+            else if(potentialWinners != Player::Both) potentialWinners = Player::X;
+        }
+        else if((a == Player::O || a == Player::Both) && (b == Player::O || b == Player::Both) && (c == Player::O || c == Player::Both)) {
+            if(state.player == Player::O) {
+                relevantMacroIndicesOffensive.push_back(ttt::wins[w][0]);
+                relevantMacroIndicesOffensive.push_back(ttt::wins[w][1]);
+                relevantMacroIndicesOffensive.push_back(ttt::wins[w][2]);
+            } else {
+                relevantMacroIndicesDefensive.push_back(ttt::wins[w][0]);
+                relevantMacroIndicesDefensive.push_back(ttt::wins[w][1]);
+                relevantMacroIndicesDefensive.push_back(ttt::wins[w][2]);
+            }
+
+            if(potentialWinners == Player::X) potentialWinners = Player::Both;
+            else if(potentialWinners != Player::Both) potentialWinners = Player::O;
+        }
+    }
+
+    int numPossibleWins = relevantMacroIndicesOffensive.size() / 3;
+    int numPossibleLosses = relevantMacroIndicesDefensive.size() / 3;
+
+    std::array<int, 9> macroFieldWorthsOffensive;
+    std::array<int, 9> macroFieldWorthsDefensive;
+
+    for(int i = 0; i < 9; i++) macroFieldWorthsOffensive[i] = std::count(relevantMacroIndicesOffensive.begin(), relevantMacroIndicesOffensive.end(), i);
+    for(int i = 0; i < 9; i++) macroFieldWorthsDefensive[i] = std::count(relevantMacroIndicesDefensive.begin(), relevantMacroIndicesDefensive.end(), i);
+
+    std::cerr << "Detected " << numPossibleWins << " possible macro-win conditions." << std::endl;
+    std::cerr << "Detected " << numPossibleLosses << " possible macro-loose conditions." << std::endl;
+
+    std::cerr << "Macroboard offensive values: " << macroFieldWorthsOffensive;
+    std::cerr << "Macroboard defensive values: " << macroFieldWorthsDefensive;
+
+
+    if(potentialWinners == Player::Both) std::cerr << "Either player can technically still win this match, i should manually asses aggressiveness." << std::endl; // TODO: Compose function to assess balance of power + balanced strategy as function of BOP
+    else if(potentialWinners == state.player) std::cerr << "Only this bot has a chance of winning, i should assume an offensive strategy." << std::endl; // TODO: Compose all-out offensive strategy
+    else if(potentialWinners == state.opponent) std::cerr << "Only the opponent has a chance of winning, i should assume a defensive strategy." << std::endl; // TODO: Compose defensive strategy
+    else {
+        std::cerr << "Neither player can win this match, no reason to risk a timeout by dedicating cpu cycles to move selection." << std::endl;
+        return moves[0];
+    }
 
     // Edge cases...
     if (moves.empty()) std::cerr << "ERROR: Board appears to be full, yet AI is asked to pick a move!" << std::endl;
     if (moves.size() == 1) return moves[0]; // Might occur later in matches
-    int searchDepth = INITIAL_SEARCH_DEPTH;
 
-
-    /// STAGE ONE
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-    std::vector<int> primaryRatings;
+    std::cerr << "Starting elimination of moves. (" << timeElapsed << " ms)" << std::endl;
 
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-    std::cerr << "Stage #1 (Elimination): Evaluating a total of " << moves.size() << " moves using MinMaxAB. (" << timeElapsed << " ms)" << std::endl;
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
+    for(int s = 0; s < selectionStages.size(); s++)
+    {
+        moveRatings = selectionStages[s].evaluate(bestMoves, state);
+        std::vector<Move> newBestMoves = PickValuesAtIndicesOfList(bestMoves, BestRatingIndicesOfList(moveRatings));
 
-    // TODO: This stage can probably be optimized a lot by rewriting the GetChildStates and EvaluateState functions, increasing search depth which will in its turn dramatically increase AI performance
+        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
+        std::cerr << "Stage #" << s+1 << " (" << selectionStages[s].name << ") eliminated " << bestMoves.size() - newBestMoves.size() << " of " << bestMoves.size() << " moves. (" << timeElapsed << " ms)" << std::endl;
+        std::cerr << "Highest rating moves are rated " << moveRatings[BestRatingIndicesOfList(moveRatings)[0]] << "." << std::endl << std::endl;
 
-    do {
-        std::cerr << "Starting pass #" << searchDepth - INITIAL_SEARCH_DEPTH + 1 << ": Search depth of " << searchDepth << "." << std::endl;
-        primaryRatings = std::vector<int>();
-
-        bool searchTreeExhausted = true;
-        for (int i = 0; i < moves.size(); i++)
+        if(newBestMoves.size() == 1)
         {
-            bool fullMoveTreeEvaluated = true;
-            State child = uttt::doMove(state, moves[i]);
-            primaryRatings.push_back(TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, me, -1, +1, &fullMoveTreeEvaluated));
-
-            if (primaryRatings[i] == +1)
-            {
-                std::cerr << "Found a route to a guaranteed win... Breaking off search!" << std::endl;
-                return moves[i];
-            }
-
-            if (!fullMoveTreeEvaluated) searchTreeExhausted = false;
-            else std::cerr << "Exhausted search tree of move #" << i << "." << std::endl;
+            std::cerr << "Found a single best move, search done." << std::endl;
+            std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
+            return newBestMoves[0];
         }
-        if (searchTreeExhausted)
-        {
-            std::cerr << "Entire search tree was exhausted! Bot knows how this game will end if played perfectly by both sides." << std::endl;
-            break;
-        }
-        searchDepth++; // Increase search depth for next iteration.
-
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
+        else bestMoves = newBestMoves;
     }
-    while ( // Keep searching 1 level deeper if there's enough time left, do not risk loosing time-bank time during first 2 rounds, its not worth it
-            (timeElapsed * 3 < timeout && timeout > (5 * timeout))
-            || // Game has a branching factor of 7, expect the time elapsed each iteration to be multiplied with this factor in worst case.
-            (timeElapsed * 6 < timeout)
-            );
-
-    std::vector<Move> bestMoves = PickValuesAtIndicesOfList(moves, BestRatingIndicesOfList(primaryRatings));
-
-    std::cerr << "Stage #1 eliminated " << moves.size() - bestMoves.size() << " of " << moves.size() << " moves." << std::endl;
-    std::cerr << "Highest rating moves are rated " << primaryRatings[BestRatingIndicesOfList(primaryRatings)[0]] << "." << std::endl << std::endl;
-
-    if(bestMoves.size() == 1) {
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-        std::cerr << "Found a single best move. Breaking of search! (" << timeElapsed << " ms) " << std::endl;
-        return bestMoves[0];
-    }
-
-
-    /// STAGE TWO
-    timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-    std::vector<int> secondaryRatings = std::vector<int>();
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-    std::cerr << "Stage #2 (Elimination): Evaluating a total of " << bestMoves.size() << " moves using MinMaxAB for sub-games. (" << timeElapsed << " ms)" << std::endl;
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-
-    std::array<std::array<Player, 9>, 9> microBoards = uttt::GetSubBoards(state.board);
-
-    for (int m = 0; m < bestMoves.size(); m++)
-    {
-        int subBoard = bestMoves[m].x / 3 + (bestMoves[m].y / 3) * 3;
-        int posInSubBoard = bestMoves[m].x % 3 + (bestMoves[m].y % 3) * 3;
-
-        std::array<int, 9> scores = TTTAI::RateMoves(microBoards[subBoard], me);
-        secondaryRatings.push_back(scores[posInSubBoard]);
-    }
-    std::vector<Move> bestMovesSecondary = PickValuesAtIndicesOfList(bestMoves, BestRatingIndicesOfList(secondaryRatings));
-    std::cerr << "Stage #2 eliminated " << bestMoves.size() - bestMovesSecondary.size() << " of " << bestMoves.size() << " moves." << std::endl;
-    std::cerr << "Highest rating moves are rated " << secondaryRatings[BestRatingIndicesOfList(secondaryRatings)[0]] << "." << std::endl << std::endl;
-
-    if(bestMovesSecondary.size() == 1)
-    {
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-        std::cerr << "Found a single best move. Breaking of search! (" << timeElapsed << " ms) " << std::endl;
-        return bestMovesSecondary[0];
-    }
-
-
-    /// STAGE THREE
-    timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-    std::vector<int> tertiaryRatings = std::vector<int>();
-
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-    std::cerr << "Stage #3 (Elimination): Evaluating a total of " << bestMovesSecondary.size() << " moves using position rating. (" << timeElapsed << " ms)" << std::endl;
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-
-    for(int i = 0; i < bestMovesSecondary.size(); i++)
-        tertiaryRatings.push_back(RateByPosition(bestMovesSecondary[i], state.board));
-
-    std::vector<Move> bestMovesTertiary = PickValuesAtIndicesOfList(bestMovesSecondary, BestRatingIndicesOfList(tertiaryRatings));
-    std::cerr << "Stage #3 eliminated " << bestMovesSecondary.size() - bestMovesTertiary.size() << " of " << bestMovesSecondary.size() << " moves." << std::endl;
-    std::cerr << "Highest rating moves are rated " << tertiaryRatings[BestRatingIndicesOfList(tertiaryRatings)[0]] << "." << std::endl << std::endl;
-
-    if(bestMovesTertiary.size() == 1)
-    {
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-        std::cerr << "Found a single best move. Breaking of search! (" << timeElapsed << " ms) " << std::endl;
-        return bestMovesTertiary[0];
-    }
-
-
-    /// STAGE FOUR
-    timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-    std::vector<int> quaternaryRatings = std::vector<int>();
-
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-    std::cerr << "Stage #4 (Elimination): Evaluating a total of " << bestMovesTertiary.size() << " moves using position rating. (" << timeElapsed << " ms)" << std::endl;
-    std::cerr << "______________________________________________________________________________________________" << std::endl;
-
-    for(int i = 0; i < bestMovesTertiary.size(); i++)
-        quaternaryRatings.push_back(RateByMacrogameFieldValue(bestMovesTertiary[i], state.board));
-
-    std::vector<Move> bestMovesQuaternary = PickValuesAtIndicesOfList(bestMovesTertiary, BestRatingIndicesOfList(quaternaryRatings));
-    std::cerr << "Stage #4 eliminated " << bestMovesTertiary.size() - bestMovesQuaternary.size() << " of " << bestMovesTertiary.size() << " moves." << std::endl;
-    std::cerr << "Highest rating moves are rated " << quaternaryRatings[BestRatingIndicesOfList(quaternaryRatings)[0]] << "." << std::endl << std::endl;
-
-    if(bestMovesQuaternary.size() == 1)
-    {
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-        std::cerr << "Found a single best move. Breaking of search! (" << timeElapsed << " ms) " << std::endl;
-        return bestMovesQuaternary[0];
-    }
-
 
     /// STAGE RANDOM
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
     std::cerr << "Multiple optimal moves have been found. Selecting one randomly... (" << timeElapsed << " ms) " << std::endl;
-    return *select_randomly(bestMovesQuaternary.begin(), bestMovesQuaternary.end());
+    std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
+    return *select_randomly(bestMoves.begin(), bestMoves.end());
+}
+
+std::vector<int> UTTTAI::RateMovesWithMiniMaxAB(const std::vector<Move> & moves, const State & state)
+{
+    if(state.round < 12) return std::vector<int>(moves.size()); // TODO: Guessed value (12)
+
+    long long int timeElapsed;
+    auto startTime = std::chrono::steady_clock::now();
+    std::vector<int> ratings;
+    int searchDepth = INITIAL_SEARCH_DEPTH;
+
+    do {
+        bool searchTreeExhausted = true;
+        ratings.clear();
+        for (int i = 0; i < moves.size(); i++)
+        {
+            bool fullMoveTreeEvaluated = true;
+            State child = uttt::doMove(state, moves[i]);
+            ratings.push_back(TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, -100, +100, &fullMoveTreeEvaluated));
+            if(!fullMoveTreeEvaluated) searchTreeExhausted = false;
+        }
+        if(searchTreeExhausted) {
+            std::cerr << "MiniMax traversed entire game-state tree." << std::endl;
+            break;
+        }
+        searchDepth++; // Increase search depth for next iteration.
+        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
+    }
+    while (timeElapsed * moves.size() < state.time_per_move); // TODO: Loop assumes branching factor to remain constant while it doesn't
+
+    std::cerr << "Searched until depth: " << searchDepth << std::endl;
+
+    return ratings;
+}
+
+std::vector<int> UTTTAI::RateMovesWithTTTStrats(const std::vector<Move> & moves, const State & state)
+{
+    std::vector<int> ratings;
+
+    for (int m = 0; m < moves.size(); m++)
+    {
+        ratings.push_back(TTTAI::RateMove(state, moves[m]));
+    }
+
+    return ratings;
+}
+
+std::vector<int> UTTTAI::RateMovesWithPosition(const std::vector<Move> &moves, const State &state)
+{
+    std::vector<int> ratings;
+
+    for(int i = 0; i < moves.size(); i++)
+        ratings.push_back(RateByPosition(moves[i], state));
+
+    return ratings;
+}
+
+std::vector<int> UTTTAI::RateMovesWithNextBoardPosition(const std::vector<Move> &moves, const State &state)
+{
+    std::vector<int> ratings;
+
+    for(int i = 0; i < moves.size(); i++)
+        ratings.push_back(RateByMacrogameFieldValue(moves[i], state));
+
+    return ratings;
+}
+
+Board UTTTAI::GetMacroBoardStripped(const State &state)
+{
+    Board board = state.macroboard;
+    for(int i = 0; i < 9; i++)
+        if(board[i] == Player::Active) board[i] == Player::None;
+
+    return board;
+}
+
+Board UTTTAI::GetPotentialMacroBoard(const State &state)
+{
+    Board potentialMacroBoard = GetMacroBoardStripped(state);
+    for(int s = 0; s < 9; s++)
+        if(potentialMacroBoard[s] == Player::None)
+            potentialMacroBoard[s] = ttt::IsWinnableForPlayer(state.subBoards[s]);
+
+    return potentialMacroBoard;
+}
+
+Player UTTTAI::GetPotentialWinners(const State &state)
+{
+    Player potentialWinners = Player::None;
+
+    std::array<Player, 9> potentialSubBoardWinners;
+    for(int b = 0; b < state.subBoards.size(); b++)
+        potentialSubBoardWinners[b] = ttt::IsWinnableForPlayer(state.subBoards[b]);
+
+    for(int w = 0; w < 8; w++)
+    {
+        Player a = potentialSubBoardWinners[ttt::wins[w][0]];
+        Player b = potentialSubBoardWinners[ttt::wins[w][1]];
+        Player c = potentialSubBoardWinners[ttt::wins[w][2]];
+
+        if(a == Player::None || b == Player::None || c == Player::None) continue; // a, b or c is never None after this point
+        if(a == b && a == c && a == Player::Both) {
+            potentialWinners = Player::Both;
+            break;
+        }
+        else if((a == Player::X || a == Player::Both) && (b == Player::X || b == Player::Both) && (c == Player::X || c == Player::Both)) {
+            if(potentialWinners == Player::O) {
+                potentialWinners = Player::Both;
+                break;
+            } else potentialWinners = Player::X;
+        }
+        else if((a == Player::O || a == Player::Both) && (b == Player::O || b == Player::Both) && (c == Player::O || c == Player::Both)) {
+            if(potentialWinners == Player::X) {
+                potentialWinners = Player::Both;
+                break;
+            } else potentialWinners = Player::O;
+        }
+    }
+
+    return potentialWinners;
 }
 
 std::vector<int> BestRatingIndicesOfList(const std::vector<int> &vals)
@@ -231,16 +353,5 @@ std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::
     for(int i = 0; i < indices.size(); i++)
         data.push_back(list[indices[i]]);
     return data;
-}
-
-static std::array<std::array<Player, 9>, 9> ParseSubBoards(const std::array<std::array<Player, 9>, 9> &state)
-{
-    std::array<std::array<Player, 9>, 9> subBoards{};
-
-    for(int x = 0; x < 3; x++)
-        for(int y = 0; y < 3; y++)
-            subBoards[y + x * 3] = uttt::GetSubBoard(state, x, y);
-
-    return subBoards;
 }
 

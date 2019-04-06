@@ -11,7 +11,7 @@
 class TTTAI {
 public:
     /// Rates effectiveness of given move in a regular game of tic-tac-toe
-    static std::array<int, 9> RateMoves(const Board &board, Player turn);
+    static int RateMove(const State & state, const Move & move);
 
     /// Function should exclusively be used for Player::X or Player::O on unfinished games
     static std::vector<int> GetWinningMoves(const Board & board, Player p);

@@ -7,41 +7,39 @@
 #include "TTTAI.h"
 #include "ttt.h"
 
-std::array<int, 9> TTTAI::RateMoves(const Board &board, Player turn)
+/// The following ratings only apply to SUB-games and therefore should
+/// only be used to rank different moves within the SAME sub-boards.
+int TTTAI::RateMove(const State & state, const Move & move)
 {
-    std::array<int, 9> ratings = {-10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000, -10000};
+    Board board = state.subBoards[move.x / 3 + (move.y / 3) * 3];
+    int subMove = move.x % 3 + (move.y % 3) * 3;
+
     std::vector<int> moves = ttt::GetMoves(board);
 
-    Player other = turn == Player::X ? Player::O : Player::X;
+    Player other = state.player == Player::X ? Player::O : Player::X;
 
-    std::vector<int> winningMoves = GetWinningMoves(board, turn);
+    std::vector<int> winningMoves = GetWinningMoves(board, state.player);
     std::vector<int> defendingMoves = GetWinningMoves(board, other);
 
-    std::vector<int> playerSetupMoves = GetSetupMoves(board, turn);
+    std::vector<int> playerSetupMoves = GetSetupMoves(board, state.player);
     std::vector<int> otherSetupMoves = GetSetupMoves(board, other);
 
-    for(int i = 0; i < moves.size(); i++)
+    int score = 0;
+
+    // Attacking moves are rated higher than defending moves as you already implicitly defend by winning a board.
+    if(std::find(winningMoves.begin(), winningMoves.end(), subMove) != winningMoves.end()) score = 100;
+
+    if(winningMoves.empty())
     {
-        int score = 0;
-
-        // Attacking moves are rated higher than defending moves as you already implicitly defend by winning a board.
-        if(std::find(winningMoves.begin(), winningMoves.end(), moves[i]) != winningMoves.end()) score += 2;
-        // Attacking and defending simultaneously should however be rated even higher as you might not get
-        // another chance to make a move on this board when an opposing win is imminent as well...
-        if(std::find(defendingMoves.begin(), defendingMoves.end(), moves[i]) != defendingMoves.end()) score += 1;
-
-        // Setting up wins should not be rewarded when winning moves exist due
-        // to the eliminating nature of UTTTAI's selection algorithm as this
-        // might lead to the unnecessary eliminations of otherwise viable moves.
-        if(winningMoves.empty())
-        {
-            score += std::count(playerSetupMoves.begin(), playerSetupMoves.end(), moves[i]);
-            score += std::count(otherSetupMoves.begin(), otherSetupMoves.end(), moves[i]);
-        }
-        ratings[moves[i]] = score;
+        // The more potential wins this move sets up, the better it will be rated
+        score += std::count(playerSetupMoves.begin(), playerSetupMoves.end(), subMove);
+        // The more potential setups of the opponent this move blocks the better
+        score += std::count(otherSetupMoves.begin(), otherSetupMoves.end(), subMove);
+        // Blocking opponent wins is a priority, doing so reaps a higher score
+        score += 2 * std::count(defendingMoves.begin(), defendingMoves.end(), subMove);
     }
 
-    return ratings;
+    return score;
 }
 
 std::vector<int> TTTAI::GetWinningMoves(const Board &board, Player p)
@@ -61,10 +59,13 @@ std::vector<int> TTTAI::GetSetupMoves(const Board &board, Player p)
     std::vector<int> moves;
     std::vector<int> cells = ttt::GetCellsOccupiedByPlayer(board, p);
 
-    for(int w = 0; w < 8; w++)
-        if(board[ttt::wins[w][0]] == p && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == Player::None) moves.push_back(ttt::wins[w][0]);
-        else if(board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][1]] == p && board[ttt::wins[w][2]] == Player::None) moves.push_back(ttt::wins[w][1]);
-        else if(board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == p) moves.push_back(ttt::wins[w][2]);
-
+    for(int w = 0; w < 8; w++) {
+        if (board[ttt::wins[w][0]] == p && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == Player::None)
+            moves.push_back(ttt::wins[w][0]);
+        if (board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][1]] == p && board[ttt::wins[w][2]] == Player::None)
+            moves.push_back(ttt::wins[w][1]);
+        if (board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == p)
+            moves.push_back(ttt::wins[w][2]);
+    }
     return moves;
 }

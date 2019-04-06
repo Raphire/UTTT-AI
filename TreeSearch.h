@@ -12,7 +12,7 @@ public:
     /// https://en.wikipedia.org/wiki/Minimax#Minimax_algorithm_with_alternate_moves
     /// https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
     /// Function arguments alpha and beta should be the worst and best value possible of type V, respectively.
-    static int MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, Player p, int worstVal, int bestVal, bool * isFullTreeEvaluated);
+    static int MiniMaxAB(O branch, int (*evaluate)(const O &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, int worstVal, int bestVal, bool * isFullTreeEvaluated);
 
 };
 
@@ -32,27 +32,27 @@ public:
 /// - int worstVal: the worst score possible; usually gained when losing the game (used for recursion, int min recommended)
 /// - int bestVal: the best score possible; usually gained when winning the game (used for recursion, int max recommended)
 template<class O>
-int TreeSearch::MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, Player p, int worstVal, int bestVal, bool * isFullTreeEvaluated)
+int TreeSearch::MiniMaxAB(O branch, int (*evaluate)(const O &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, int worstVal, int bestVal, bool * isFullTreeEvaluated)
 {
     // Get all child nodes with function passed as argument
     auto children = findChildNodes(branch);
 
     // This branch has no children, all we can do is evaluate it now
     if(children.empty()) {
-        return evaluate(branch, p);
+        return evaluate(branch);
     }
 
     // Depth limit has been reached, return value of current node
     if(depth == 0) {
         *isFullTreeEvaluated = false;
-        return evaluate(branch, p);
+        return evaluate(branch);
     }
 
     int value;
     if(maximize) {
         value = worstVal;
         for(O child:children) {
-            int childVal = MiniMaxAB(child, evaluate, findChildNodes, depth-1, false, p, worstVal, bestVal, isFullTreeEvaluated);
+            int childVal = MiniMaxAB(child, evaluate, findChildNodes, depth-1, false, worstVal, bestVal, isFullTreeEvaluated);
             if(childVal > value) value = childVal;
             if(value > worstVal) worstVal = value;
             if(worstVal >= bestVal) break;
@@ -60,7 +60,7 @@ int TreeSearch::MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), 
     } else {
         value = bestVal;
         for(O child:children) {
-            int childVal = MiniMaxAB(child, evaluate, findChildNodes, depth-1, true, p, worstVal, bestVal, isFullTreeEvaluated);
+            int childVal = MiniMaxAB(child, evaluate, findChildNodes, depth-1, true, worstVal, bestVal, isFullTreeEvaluated);
             if(childVal < value) value = childVal;
             if(value < bestVal) bestVal = value;
             if(worstVal >= bestVal) break;

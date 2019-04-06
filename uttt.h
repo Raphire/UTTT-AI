@@ -12,19 +12,33 @@
 #include <iostream>
 
 struct Move { int x, y; };
-enum class Player { None, X, O, Active, Both };
+
+enum class Player {
+    None = -2,
+    X = 1,
+    O = 0,
+    Active = -1,
+    Both = 2
+};
 
 struct State {
 	std::array<std::array<Player,9>,9> board;
-	std::array<std::array<Player,3>,3> macroboard;
+	std::array<Player,9> macroboard;
 
-	State() {
+	std::array<std::array<Player,9>,9> subBoards;
+	Player turn = Player::O;
+	Player player, opponent;
+	int round;
+	Player winner = Player::None;
+
+    int time_per_move;
+
+    State() {
 		for (int r=0; r<9; r++)
 			for (int c=0; c<9; c++)
 				board[r][c] = Player::None;
-		for (int r=0; r<3; r++)
-			for (int c=0; c<3; c++)
-				macroboard[r][c] = Player::Active;
+		for (int i = 0; i < 9; i++)
+				macroboard[i] = Player::Active;
 	}
 };
 
@@ -46,17 +60,12 @@ Iter select_randomly(Iter start, Iter end) {
 std::ostream &operator<<(std::ostream& os, const Player &p);
 std::ostream &operator<<(std::ostream& os, const State &s);
 std::ostream &operator<<(std::ostream& os, const Move &m);
+std::ostream &operator<<(std::ostream& os, const std::array<int, 9> &vals);
 
 class uttt {
 public:
-    static Player getCurrentPlayer(const State &state);
     static State doMove(const State &state, const Move &m);
-    static Player getWinner(const State &state);
-    static Player getWinner(const State &state, int row, int col);
     static std::vector<Move> getMoves(const State &state);
-    static std::array<Player, 9> GetSubBoard(std::array<std::array<Player, 9>, 9> macroBoard, int i, int i1);
-    static std::array<std::array<Player, 9>, 9> GetSubBoards(std::array<std::array<Player, 9>, 9> macroBoard);
-    static std::array<Player, 9> GetNextSubBoard(std::array<std::array<Player, 9>, 9> array, int i, int i1);
     static int GetMicroMove(const Move &m);
 
 };

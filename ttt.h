@@ -11,6 +11,8 @@ using Board = std::array<Player, 9>;
 
 class ttt {
 
+
+
 public:
     static int wins [8][3];
 
