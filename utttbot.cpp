@@ -19,6 +19,8 @@ void UTTTBot::run()
 
 void UTTTBot::input(std::string &line)
 {
+    inputLines.push_back(line);	// Cache input for later use
+
 	std::vector<std::string> command = split(line, ' ');
 	if (command[0] == "settings") {
 		setting(command[1], command[2]);

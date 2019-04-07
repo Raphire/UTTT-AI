@@ -19,11 +19,10 @@ class UTTTBot {
 	std::string your_bot;
 	int your_botid;
 	bool firstMove = true;
-
 	int round;
 	State state;
 
-
+	std::vector<std::string> inputLines;
 
 	std::vector<std::string> split(const std::string &s, char delim);
 	void setting(std::string &key, std::string &value);
