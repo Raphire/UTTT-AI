@@ -187,7 +187,7 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
 
     if(ttt::CloseWin(nextBoard, me, true)) score -= 2;      // Making this move would allow the opponent to block my win next microboard
     if(ttt::CloseWin(nextBoard, me, false)) score -= 2;     // Making this move would allow the opponent to win the next microboard
-    if(nextMoves.size() == 0) score -= 6;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
+    if(nextMoves.size() == 0) score -= 4;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
 
     if(score != 0){
         return score;
@@ -202,7 +202,7 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
     if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) return 1;
 
     // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-    if(nextWinnableBy == Player::None) return 6;
+    if(nextWinnableBy == Player::None) return 4;
 }
 
 std::vector<State> UTTTAI::GetChildStates(const State &state)
