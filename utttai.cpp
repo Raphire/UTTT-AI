@@ -241,10 +241,24 @@ MicroState UTTTAI::GetMicroState(const State &state, const Move &move, bool getN
 
 std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, const Player &me, const bool myWin){
     std::vector<MacroState> preferredBoards;
+    Player other = me == Player::X ? Player::O : Player::X;
+    State current;
+
+    for (int r=0; r<3; r++) {
+        for (int c = 0; c < 3; c++) {
+            if(state.macroboard[r][c] == Player::Active)
+                current.macroboard[r][c] = Player::None;
+            if(state.macroboard[r][c] == Player::X)
+                current.macroboard[r][c] = Player::X;
+            if(state.macroboard[r][c] == Player::O)
+                current.macroboard[r][c] = Player::O;
+        }
+    }
 
     std::array<std::array<MacroState, 3>, 8> wins =
         {{
             {MacroState{0, 0}, MacroState{0, 1}, MacroState{0, 2}},
+            {MacroState{1, 0}, MacroState{1, 1}, MacroState{1, 2}},
             {MacroState{2, 0}, MacroState{2, 1}, MacroState{2, 2}},
             {MacroState{0, 0}, MacroState{1, 0}, MacroState{2, 0}},
             {MacroState{0, 1}, MacroState{1, 1}, MacroState{2, 1}},
@@ -258,10 +272,12 @@ std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, con
         int count = 0;
 
         for (MacroState m : win) {
-            if (state.macroboard[m.x][m.y] == me && myWin) count++;
-            else if (state.macroboard[m.x][m.y] != me && state.macroboard[m.x][m.y] != Player::None && !myWin) count++;
-            else if (state.macroboard[m.x][m.y] == Player::None) temp = m;
-            else if (state.macroboard[m.x][m.y] != Player::None) {
+            if (current.macroboard[m.y][m.x] == me && myWin) count++;
+            else if (current.macroboard[m.y][m.x] == other && !myWin) count++;
+            else if (current.macroboard[m.y][m.x] == Player::None) {
+                temp = m;
+            }
+            else if (current.macroboard[m.y][m.x] != Player::None) {
                 count = 0;
                 break;
             }
@@ -269,6 +285,7 @@ std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, con
 
         if(count == 2 && temp.x != -1 && temp.y != -1){
             preferredBoards.push_back(temp);
+            std::cerr << "x y " << temp.x << temp.y << std::endl;
         }
     }
 
