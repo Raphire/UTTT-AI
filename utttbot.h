@@ -31,6 +31,8 @@ class UTTTBot {
 
 public:
 	void run();
+
+    void input(std::basic_string<char> &basic_string);
 };
 
 #endif // UTTTBOT_H
