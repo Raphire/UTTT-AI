@@ -9,18 +9,7 @@
 
 void UTTTBot::run() {
 	std::string line;
-	while (std::getline(std::cin, line)) {
-		std::vector<std::string> command = split(line, ' ');
-		if (command[0] == "settings") {
-			setting(command[1], command[2]);
-		} else if (command[0] == "update" && command[1] == "game") {
-			update(command[2], command[3]);
-		} else if (command[0] == "action" && command[1] == "move") {
-			move(std::stoi(command[2]));
-		} else {
-			std::cerr << "Unknown command: " << line << std::endl;
-		}
-	}
+	while (std::getline(std::cin, line)) input(line);
 }
 
 void UTTTBot::move(int timeout) {
@@ -107,4 +96,18 @@ std::vector<std::string> UTTTBot::split(const std::string &s, char delim) {
 		elems.push_back(item);
 	}
 	return elems;
+}
+
+void UTTTBot::input(std::basic_string<char> & line)
+{
+    std::vector<std::string> command = split(line, ' ');
+    if (command[0] == "settings") {
+        setting(command[1], command[2]);
+    } else if (command[0] == "update" && command[1] == "game") {
+        update(command[2], command[3]);
+    } else if (command[0] == "action" && command[1] == "move") {
+        move(std::stoi(command[2]));
+    } else {
+        std::cerr << "Unknown command: " << line << std::endl;
+    }
 }
