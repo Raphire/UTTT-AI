@@ -9,20 +9,18 @@
 
 /// The following ratings only apply to SUB-games and therefore should
 /// only be used to rank different moves within the SAME sub-boards.
-int TTTAI::RateMove(const State & state, const Move & move)
+int TTTAI::RateMove(const AssessedState & assessedState, const Move & move)
 {
-    Board board = state.subBoards[move.x / 3 + (move.y / 3) * 3];
+    Board board = assessedState.state.subBoards[move.x / 3 + (move.y / 3) * 3];
     int subMove = move.x % 3 + (move.y % 3) * 3;
 
     std::vector<int> moves = ttt::GetMoves(board);
 
-    Player other = state.player == Player::X ? Player::O : Player::X;
+    std::vector<int> winningMoves = GetWinningMoves(board, assessedState.state.player);
+    std::vector<int> defendingMoves = GetWinningMoves(board, assessedState.state.opponent);
 
-    std::vector<int> winningMoves = GetWinningMoves(board, state.player);
-    std::vector<int> defendingMoves = GetWinningMoves(board, other);
-
-    std::vector<int> playerSetupMoves = GetSetupMoves(board, state.player);
-    std::vector<int> otherSetupMoves = GetSetupMoves(board, other);
+    std::vector<int> playerSetupMoves = GetSetupMoves(board, assessedState.state.player);
+    std::vector<int> otherSetupMoves = GetSetupMoves(board, assessedState.state.opponent);
 
     int score = 0;
 

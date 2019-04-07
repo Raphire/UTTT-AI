@@ -28,7 +28,7 @@ struct State {
 	std::array<std::array<Player,9>,9> subBoards;
 	Player turn = Player::O;
 	Player player, opponent;
-	int round;
+	int round = 1;
 	Player winner = Player::None;
 
     int time_per_move;

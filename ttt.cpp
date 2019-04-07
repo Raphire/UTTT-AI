@@ -86,12 +86,6 @@ Player ttt::IsWinnableForPlayer(const Board &b)
 
     Player winnableBy = Player::None;
 
-    int wins[8][3] = {
-            {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
-            {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
-            {0, 4, 8}, {2, 4, 6}
-    };
-
     // Check if each win pos can still be occupied by each player
     for(int w = 0; w < 8; w++)
     {
@@ -106,12 +100,6 @@ Player ttt::IsWinnableForPlayer(const Board &b)
     return winnableBy;
 }
 
-bool ttt::IsGameOver(const Board &b)
-{
-    if(GetMoves(b).size() == 0)
-        return true;
-    return false;
-}
 
 std::vector<int> ttt::GetCellsOccupiedByPlayer(const Board & b, const Player & p)
 {
@@ -120,6 +108,30 @@ std::vector<int> ttt::GetCellsOccupiedByPlayer(const Board & b, const Player & p
         if(b[c] == p) cells.push_back(c);
 
     return cells;
+}
+
+/// Returns 0 if board has been decided or no winning moves exist for given player
+int ttt::GetMinimumMovesToWin(const std::array<Player, 9> &board, const Player &player)
+{
+    if(GetWinner(board) != Player::None) return 0;
+
+    int result = 0;
+    Player opponent = player == Player::X ? Player::O : Player::X;
+
+    for(int w = 0; w < 8; w++) {
+        int pCount = 0;
+        if (board[wins[w][0]] != opponent && board[wins[w][1]] != opponent && board[wins[w][2]] != opponent)
+        {
+            if(board[wins[w][0]] == player) pCount++;
+            if(board[wins[w][1]] == player) pCount++;
+            if(board[wins[w][2]] == player) pCount++;
+
+            int num = 3 - pCount;
+            if(num < result || result == 0) result = num;
+        } else continue;
+    }
+
+    return result;
 }
 
 

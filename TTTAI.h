@@ -5,13 +5,13 @@
 #ifndef UTTTPROBESTBOTEUW_TTTAI_H
 #define UTTTPROBESTBOTEUW_TTTAI_H
 
-
 #include "ttt.h"
+#include "UTTTAI.h"
 
 class TTTAI {
 public:
     /// Rates effectiveness of given move in a regular game of tic-tac-toe
-    static int RateMove(const State & state, const Move & move);
+    static int RateMove(const AssessedState & state, const Move & move);
 
     /// Function should exclusively be used for Player::X or Player::O on unfinished games
     static std::vector<int> GetWinningMoves(const Board & board, Player p);

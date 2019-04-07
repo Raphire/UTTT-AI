@@ -1,6 +1,3 @@
-// uttt.cpp
-// Aswin van Woudenberg
-
 #include "uttt.h"
 #include "ttt.h"
 
@@ -19,8 +16,10 @@ std::ostream &operator<<(std::ostream& os, const Player &p) {
 
 std::ostream &operator<<(std::ostream& os, const State &s) {
 	for (int r=0; r<9; r++) {
+	    if(r % 3 == 0) os << std::endl;
 		for (int c=0; c<9; c++) {
-			os << s.board[r][c];
+		    if(c % 3 == 0) os << "  ";
+			os << s.board[r][c] << " ";
 		}
 		os << std::endl;
 	}
@@ -28,7 +27,7 @@ std::ostream &operator<<(std::ostream& os, const State &s) {
 
 	for (int i = 0; i < 9; i++)
 	    if(i % 3 == 0) os << std::endl << s.macroboard[i];
-        else os << s.macroboard[i];
+        else os << " " << s.macroboard[i];
 	os << std::endl;
 
 	return os;
