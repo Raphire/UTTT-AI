@@ -108,10 +108,15 @@ std::vector<Move>  UTTTAI::findBestMicroMoves(const State &state, const std::vec
     auto turnStartTime = std::chrono::steady_clock::now();
     int timeElapsed;
 
-    std::vector<MacroState> preferredBoards = GetPreferredMacroBoards(state, me);
+    std::vector<MacroState> myPreferredBoards = GetPreferredMacroBoards(state, me, true);
+    std::vector<MacroState> enemyPreferredBoards = GetPreferredMacroBoards(state, me, false);
+
+    std::cerr << "myboards" << myPreferredBoards.size() << std::endl;
+    std::cerr << "enemyboards" << enemyPreferredBoards.size() << std::endl;
 
     for(Move move : bestMoves){
         State child = doMove(state, move);
+
         std::cerr << "move: " << move << std::endl;
         microRating = EvaluateMicroState(GetMicroState(child, move, false), me);
         std::cerr << "score1: " << microRating << std::endl;
@@ -119,11 +124,23 @@ std::vector<Move>  UTTTAI::findBestMicroMoves(const State &state, const std::vec
         std::cerr << "score2: " << microRating << std::endl;
         if(ttt::CloseWin(GetMicroState(state, move, false), me, true))
             microRating += 1;
-        for(MacroState state : preferredBoards){
+        if(ttt::CloseWin(GetMicroState(state, move, false), me, false) && !ttt::CloseWin(GetMicroState(child, move, false), me, false))
+            microRating += 2;
+        for(MacroState state : myPreferredBoards){
             if(move.x / 3 == state.x && move.y / 3 == state.y)
                 microRating += 3;
+            std::cerr << "myscore3: " << microRating << std::endl;
             if(move.x % 3 == state.x && move.y % 3 == state.y)
                 microRating -= 3;
+            std::cerr << "myscore4: " << microRating << std::endl;
+        }
+        for(MacroState state : enemyPreferredBoards){
+            if(move.x / 3 == state.x && move.y / 3 == state.y)
+                microRating += 3;
+            std::cerr << "enemyscore3: " << microRating << std::endl;
+            if(move.x % 3 == state.x && move.y % 3 == state.y)
+                microRating -= 3;
+            std::cerr << "enemyscore4: " << microRating << std::endl;
         }
         std::cerr << "totalscore: " << microRating << std::endl;
         if(microRating > highestMicroRating){
@@ -158,7 +175,7 @@ int UTTTAI::EvaluateMicroState(const MicroState &state, const Player &player)
     if (winner == player) return +5;						                        // Bot has won in evaluated state
     Player possibleWinner = ttt::IsWinnableBy(state);
     if (winner == Player::None) return 0;						                    // No winner
-    if(possibleWinner != player && possibleWinner != Player::Both) return -3;       // This microstate can only be won by the enemy
+    if(possibleWinner != player && possibleWinner != Player::Both) return -5;       // This microstate can only be won by the enemy
     return -5;                                                                      // Opponent has won in evaluated state
 }
 
@@ -170,7 +187,7 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
 
     if(ttt::CloseWin(nextBoard, me, true)) score -= 2;      // Making this move would allow the opponent to block my win next microboard
     if(ttt::CloseWin(nextBoard, me, false)) score -= 2;     // Making this move would allow the opponent to win the next microboard
-    if(nextMoves.size() == 0) score -= 4;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
+    if(nextMoves.size() == 0) score -= 6;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
 
     if(score != 0){
         return score;
@@ -185,7 +202,7 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
     if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) return 1;
 
     // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-    if(nextWinnableBy == Player::None) return 3;
+    if(nextWinnableBy == Player::None) return 6;
 }
 
 std::vector<State> UTTTAI::GetChildStates(const State &state)
@@ -222,38 +239,167 @@ MicroState UTTTAI::GetMicroState(const State &state, const Move &move, bool getN
     return microState;
 }
 
-std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, const Player &me){
+std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, const Player &me, const bool myWin){
     std::vector<MacroState> preferredBoards;
 
-    // Horizontal
-    if(state.macroboard[0][0] == state.macroboard[1][0] && state.macroboard[2][0] == Player::None && state.macroboard[0][0] == me) preferredBoards.push_back(MacroState{ 2, 0 });
-    if(state.macroboard[0][0] == state.macroboard[2][0] && state.macroboard[1][0] == Player::None && state.macroboard[0][0] == me) preferredBoards.push_back(MacroState{ 1, 0 });
-    if(state.macroboard[1][0] == state.macroboard[2][0] && state.macroboard[0][0] == Player::None && state.macroboard[1][0] == me) preferredBoards.push_back(MacroState{ 0, 0 });
-    if(state.macroboard[0][1] == state.macroboard[1][1] && state.macroboard[2][1] == Player::None && state.macroboard[0][1] == me) preferredBoards.push_back(MacroState{ 2, 1 });
-    if(state.macroboard[0][1] == state.macroboard[2][1] && state.macroboard[1][1] == Player::None && state.macroboard[0][1] == me) preferredBoards.push_back(MacroState{ 1, 1 });
-    if(state.macroboard[1][1] == state.macroboard[2][1] && state.macroboard[0][1] == Player::None && state.macroboard[1][1] == me) preferredBoards.push_back(MacroState{ 0, 1 });
-    if(state.macroboard[0][2] == state.macroboard[1][2] && state.macroboard[2][2] == Player::None && state.macroboard[0][2] == me) preferredBoards.push_back(MacroState{ 2, 2 });
-    if(state.macroboard[0][2] == state.macroboard[2][2] && state.macroboard[1][2] == Player::None && state.macroboard[0][2] == me) preferredBoards.push_back(MacroState{ 1, 2 });
-    if(state.macroboard[1][2] == state.macroboard[2][2] && state.macroboard[0][2] == Player::None && state.macroboard[1][2] == me) preferredBoards.push_back(MacroState{ 0, 2 });
+    if(myWin) {
+        // Horizontal
+        if (state.macroboard[0][0] == state.macroboard[1][0] && state.macroboard[2][0] == Player::None &&
+            state.macroboard[0][0] == me)
+            preferredBoards.push_back(MacroState{2, 0});
+        if (state.macroboard[0][0] == state.macroboard[2][0] && state.macroboard[1][0] == Player::None &&
+            state.macroboard[0][0] == me)
+            preferredBoards.push_back(MacroState{1, 0});
+        if (state.macroboard[1][0] == state.macroboard[2][0] && state.macroboard[0][0] == Player::None &&
+            state.macroboard[1][0] == me)
+            preferredBoards.push_back(MacroState{0, 0});
+        if (state.macroboard[0][1] == state.macroboard[1][1] && state.macroboard[2][1] == Player::None &&
+            state.macroboard[0][1] == me)
+            preferredBoards.push_back(MacroState{2, 1});
+        if (state.macroboard[0][1] == state.macroboard[2][1] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[0][1] == me)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[1][1] == state.macroboard[2][1] && state.macroboard[0][1] == Player::None &&
+            state.macroboard[1][1] == me)
+            preferredBoards.push_back(MacroState{0, 1});
+        if (state.macroboard[0][2] == state.macroboard[1][2] && state.macroboard[2][2] == Player::None &&
+            state.macroboard[0][2] == me)
+            preferredBoards.push_back(MacroState{2, 2});
+        if (state.macroboard[0][2] == state.macroboard[2][2] && state.macroboard[1][2] == Player::None &&
+            state.macroboard[0][2] == me)
+            preferredBoards.push_back(MacroState{1, 2});
+        if (state.macroboard[1][2] == state.macroboard[2][2] && state.macroboard[0][2] == Player::None &&
+            state.macroboard[1][2] == me)
+            preferredBoards.push_back(MacroState{0, 2});
 
-    // Vertical
-    if(state.macroboard[0][0] == state.macroboard[0][1] && state.macroboard[0][2] == Player::None && state.macroboard[0][0] == me) preferredBoards.push_back(MacroState{ 0, 2 });
-    if(state.macroboard[0][0] == state.macroboard[0][2] && state.macroboard[0][1] == Player::None && state.macroboard[0][0] == me) preferredBoards.push_back(MacroState{ 0, 1 });
-    if(state.macroboard[0][1] == state.macroboard[0][2] && state.macroboard[0][0] == Player::None && state.macroboard[0][1] == me) preferredBoards.push_back(MacroState{ 0, 0 });
-    if(state.macroboard[1][0] == state.macroboard[1][1] && state.macroboard[1][2] == Player::None && state.macroboard[1][0] == me) preferredBoards.push_back(MacroState{ 1, 2 });
-    if(state.macroboard[1][0] == state.macroboard[1][2] && state.macroboard[1][1] == Player::None && state.macroboard[1][0] == me) preferredBoards.push_back(MacroState{ 1, 1 });
-    if(state.macroboard[1][1] == state.macroboard[1][2] && state.macroboard[1][0] == Player::None && state.macroboard[1][1] == me) preferredBoards.push_back(MacroState{ 1, 0 });
-    if(state.macroboard[2][0] == state.macroboard[2][1] && state.macroboard[2][2] == Player::None && state.macroboard[2][0] == me) preferredBoards.push_back(MacroState{ 2, 2 });
-    if(state.macroboard[2][0] == state.macroboard[2][2] && state.macroboard[2][1] == Player::None && state.macroboard[2][0] == me) preferredBoards.push_back(MacroState{ 2, 1 });
-    if(state.macroboard[2][1] == state.macroboard[2][2] && state.macroboard[2][0] == Player::None && state.macroboard[2][1] == me) preferredBoards.push_back(MacroState{ 2, 0 });
+        // Vertical
+        if (state.macroboard[0][0] == state.macroboard[0][1] && state.macroboard[0][2] == Player::None &&
+            state.macroboard[0][0] == me)
+            preferredBoards.push_back(MacroState{0, 2});
+        if (state.macroboard[0][0] == state.macroboard[0][2] && state.macroboard[0][1] == Player::None &&
+            state.macroboard[0][0] == me)
+            preferredBoards.push_back(MacroState{0, 1});
+        if (state.macroboard[0][1] == state.macroboard[0][2] && state.macroboard[0][0] == Player::None &&
+            state.macroboard[0][1] == me)
+            preferredBoards.push_back(MacroState{0, 0});
+        if (state.macroboard[1][0] == state.macroboard[1][1] && state.macroboard[1][2] == Player::None &&
+            state.macroboard[1][0] == me)
+            preferredBoards.push_back(MacroState{1, 2});
+        if (state.macroboard[1][0] == state.macroboard[1][2] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[1][0] == me)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[1][1] == state.macroboard[1][2] && state.macroboard[1][0] == Player::None &&
+            state.macroboard[1][1] == me)
+            preferredBoards.push_back(MacroState{1, 0});
+        if (state.macroboard[2][0] == state.macroboard[2][1] && state.macroboard[2][2] == Player::None &&
+            state.macroboard[2][0] == me)
+            preferredBoards.push_back(MacroState{2, 2});
+        if (state.macroboard[2][0] == state.macroboard[2][2] && state.macroboard[2][1] == Player::None &&
+            state.macroboard[2][0] == me)
+            preferredBoards.push_back(MacroState{2, 1});
+        if (state.macroboard[2][1] == state.macroboard[2][2] && state.macroboard[2][0] == Player::None &&
+            state.macroboard[2][1] == me)
+            preferredBoards.push_back(MacroState{2, 0});
 
-    // Diagonal
-    if(state.macroboard[0][0] == state.macroboard[1][1] && state.macroboard[2][2] == Player::None && state.macroboard[0][0] == me) preferredBoards.push_back(MacroState{ 2, 2 });
-    if(state.macroboard[0][0] == state.macroboard[2][2] && state.macroboard[1][1] == Player::None && state.macroboard[0][0] == me) preferredBoards.push_back(MacroState{ 1, 1 });
-    if(state.macroboard[1][1] == state.macroboard[2][2] && state.macroboard[0][0] == Player::None && state.macroboard[1][1] == me) preferredBoards.push_back(MacroState{ 0, 0 });
-    if(state.macroboard[2][0] == state.macroboard[1][1] && state.macroboard[0][2] == Player::None && state.macroboard[2][0] == me) preferredBoards.push_back(MacroState{ 0, 2 });
-    if(state.macroboard[2][0] == state.macroboard[0][2] && state.macroboard[1][1] == Player::None && state.macroboard[2][0] == me) preferredBoards.push_back(MacroState{ 1, 1 });
-    if(state.macroboard[0][2] == state.macroboard[1][1] && state.macroboard[2][0] == Player::None && state.macroboard[2][1] == me) preferredBoards.push_back(MacroState{ 2, 0 });
+        // Diagonal
+        if (state.macroboard[0][0] == state.macroboard[1][1] && state.macroboard[2][2] == Player::None &&
+            state.macroboard[0][0] == me)
+            preferredBoards.push_back(MacroState{2, 2});
+        if (state.macroboard[0][0] == state.macroboard[2][2] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[0][0] == me)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[1][1] == state.macroboard[2][2] && state.macroboard[0][0] == Player::None &&
+            state.macroboard[1][1] == me)
+            preferredBoards.push_back(MacroState{0, 0});
+        if (state.macroboard[2][0] == state.macroboard[1][1] && state.macroboard[0][2] == Player::None &&
+            state.macroboard[2][0] == me)
+            preferredBoards.push_back(MacroState{0, 2});
+        if (state.macroboard[2][0] == state.macroboard[0][2] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[2][0] == me)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[0][2] == state.macroboard[1][1] && state.macroboard[2][0] == Player::None &&
+            state.macroboard[2][1] == me)
+            preferredBoards.push_back(MacroState{2, 0});
+    }
+    else{
+        // Horizontal
+        if (state.macroboard[0][0] == state.macroboard[1][0] && state.macroboard[2][0] == Player::None &&
+            state.macroboard[0][0] != me && state.macroboard[0][0] != Player::None)
+            preferredBoards.push_back(MacroState{2, 0});
+        if (state.macroboard[0][0] == state.macroboard[2][0] && state.macroboard[1][0] == Player::None &&
+            state.macroboard[0][0] != me && state.macroboard[0][0] != Player::None)
+            preferredBoards.push_back(MacroState{1, 0});
+        if (state.macroboard[1][0] == state.macroboard[2][0] && state.macroboard[0][0] == Player::None &&
+            state.macroboard[1][0] != me && state.macroboard[1][0] != Player::None)
+            preferredBoards.push_back(MacroState{0, 0});
+        if (state.macroboard[0][1] == state.macroboard[1][1] && state.macroboard[2][1] == Player::None &&
+            state.macroboard[0][1] != me && state.macroboard[0][1] != Player::None)
+            preferredBoards.push_back(MacroState{2, 1});
+        if (state.macroboard[0][1] == state.macroboard[2][1] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[0][1] != me && state.macroboard[0][1] != Player::None)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[1][1] == state.macroboard[2][1] && state.macroboard[0][1] == Player::None &&
+            state.macroboard[1][1] != me && state.macroboard[1][1] != Player::None)
+            preferredBoards.push_back(MacroState{0, 1});
+        if (state.macroboard[0][2] == state.macroboard[1][2] && state.macroboard[2][2] == Player::None &&
+            state.macroboard[0][2] != me && state.macroboard[0][2] != Player::None)
+            preferredBoards.push_back(MacroState{2, 2});
+        if (state.macroboard[0][2] == state.macroboard[2][2] && state.macroboard[1][2] == Player::None &&
+            state.macroboard[0][2] != me && state.macroboard[0][2] != Player::None)
+            preferredBoards.push_back(MacroState{1, 2});
+        if (state.macroboard[1][2] == state.macroboard[2][2] && state.macroboard[0][2] == Player::None &&
+            state.macroboard[1][2] != me && state.macroboard[1][2] != Player::None)
+            preferredBoards.push_back(MacroState{0, 2});
+
+        // Vertical
+        if (state.macroboard[0][0] == state.macroboard[0][1] && state.macroboard[0][2] == Player::None &&
+            state.macroboard[0][0] != me && state.macroboard[0][0] != Player::None)
+            preferredBoards.push_back(MacroState{0, 2});
+        if (state.macroboard[0][0] == state.macroboard[0][2] && state.macroboard[0][1] == Player::None &&
+            state.macroboard[0][0] != me && state.macroboard[0][0] != Player::None)
+            preferredBoards.push_back(MacroState{0, 1});
+        if (state.macroboard[0][1] == state.macroboard[0][2] && state.macroboard[0][0] == Player::None &&
+            state.macroboard[0][1] != me && state.macroboard[0][1] != Player::None)
+            preferredBoards.push_back(MacroState{0, 0});
+        if (state.macroboard[1][0] == state.macroboard[1][1] && state.macroboard[1][2] == Player::None &&
+            state.macroboard[1][0] != me && state.macroboard[1][0] != Player::None)
+            preferredBoards.push_back(MacroState{1, 2});
+        if (state.macroboard[1][0] == state.macroboard[1][2] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[1][0] != me && state.macroboard[1][0] != Player::None)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[1][1] == state.macroboard[1][2] && state.macroboard[1][0] == Player::None &&
+            state.macroboard[1][1] != me && state.macroboard[1][1] != Player::None)
+            preferredBoards.push_back(MacroState{1, 0});
+        if (state.macroboard[2][0] == state.macroboard[2][1] && state.macroboard[2][2] == Player::None &&
+            state.macroboard[2][0] != me && state.macroboard[2][0] != Player::None)
+            preferredBoards.push_back(MacroState{2, 2});
+        if (state.macroboard[2][0] == state.macroboard[2][2] && state.macroboard[2][1] == Player::None &&
+            state.macroboard[2][0] != me && state.macroboard[2][0] != Player::None)
+            preferredBoards.push_back(MacroState{2, 1});
+        if (state.macroboard[2][1] == state.macroboard[2][2] && state.macroboard[2][0] == Player::None &&
+            state.macroboard[2][1] != me && state.macroboard[2][1] != Player::None)
+            preferredBoards.push_back(MacroState{2, 0});
+
+        // Diagonal
+        if (state.macroboard[0][0] == state.macroboard[1][1] && state.macroboard[2][2] == Player::None &&
+            state.macroboard[0][0] != me && state.macroboard[0][0] != Player::None)
+            preferredBoards.push_back(MacroState{2, 2});
+        if (state.macroboard[0][0] == state.macroboard[2][2] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[0][0] != me && state.macroboard[0][0] != Player::None)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[1][1] == state.macroboard[2][2] && state.macroboard[0][0] == Player::None &&
+            state.macroboard[1][1] != me && state.macroboard[1][1] != Player::None)
+            preferredBoards.push_back(MacroState{0, 0});
+        if (state.macroboard[2][0] == state.macroboard[1][1] && state.macroboard[0][2] == Player::None &&
+            state.macroboard[2][0] != me && state.macroboard[2][0] != Player::None)
+            preferredBoards.push_back(MacroState{0, 2});
+        if (state.macroboard[2][0] == state.macroboard[0][2] && state.macroboard[1][1] == Player::None &&
+            state.macroboard[2][0] != me && state.macroboard[2][0] != Player::None)
+            preferredBoards.push_back(MacroState{1, 1});
+        if (state.macroboard[0][2] == state.macroboard[1][1] && state.macroboard[2][0] == Player::None &&
+            state.macroboard[2][1] != me && state.macroboard[2][1] != Player::None)
+            preferredBoards.push_back(MacroState{2, 0});
+    }
 
     return preferredBoards;
 }

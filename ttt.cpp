@@ -22,7 +22,7 @@ Player ttt::GetWinner(const MicroState &b)
     return  Player::None;
 }
 
-bool ttt::CloseWin(const MicroState &b, const Player &me , const bool myWin)
+bool ttt::CloseWin(const MicroState &b, const Player &me, const bool myWin)
 {
     if(myWin){
         // Horizontal
