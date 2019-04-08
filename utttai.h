@@ -24,7 +24,7 @@ class UTTTAI {
 
     static std::vector<State> GetChildStates(const State &state);
     static MicroState GetMicroState(const State &state, const Move &move, const bool getNext);
-    static std::vector<MacroState> GetPreferredMacroBoards (const State &state, const Player &me, const bool myWin);
+    static std::vector<MacroState> GetPreferredMacroBoards (const State &state, const Player &me, const bool myWin, const int num);
 
 public:
     static Move findBestMove(const State &state, const int &timeout, const int &timePerMove);

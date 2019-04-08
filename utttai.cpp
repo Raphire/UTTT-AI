@@ -104,12 +104,15 @@ Move UTTTAI::findBestMove(const State &state, const int &timeout, const int &tim
 std::vector<Move>  UTTTAI::findBestMicroMoves(const State &state, const std::vector<Move> &bestMoves, const Player &me){
     std::vector<Move> secondaryBestMoves;
     int highestMicroRating = -999;
+    Player other = me == Player::X ? Player::O : Player::X;
     int microRating;
     auto turnStartTime = std::chrono::steady_clock::now();
     int timeElapsed;
 
-    std::vector<MacroState> myPreferredBoards = GetPreferredMacroBoards(state, me, true);
-    std::vector<MacroState> enemyPreferredBoards = GetPreferredMacroBoards(state, me, false);
+    std::vector<MacroState> myPreferredBoards = GetPreferredMacroBoards(state, me, true, 2);
+    std::vector<MacroState> enemyPreferredBoards = GetPreferredMacroBoards(state, me, false, 2);
+    std::vector<MacroState> myPreferredBoards1 = GetPreferredMacroBoards(state, me, true, 1);
+    std::vector<MacroState> enemyPreferredBoards1 = GetPreferredMacroBoards(state, me, false, 1);
 
     std::cerr << "myboards" << myPreferredBoards.size() << std::endl;
     std::cerr << "enemyboards" << enemyPreferredBoards.size() << std::endl;
@@ -125,21 +128,38 @@ std::vector<Move>  UTTTAI::findBestMicroMoves(const State &state, const std::vec
         if(ttt::CloseWin(GetMicroState(state, move, false), me, true))
             microRating += 1;
         if(ttt::CloseWin(GetMicroState(state, move, false), me, false) && !ttt::CloseWin(GetMicroState(child, move, false), me, false))
-            microRating += 2;
-        for(MacroState state : myPreferredBoards){
-            if(move.x / 3 == state.x && move.y / 3 == state.y)
-                microRating += 3;
+            microRating += 3;
+        std::cerr << "score3: " << microRating << std::endl;
+        for(MacroState macroState : myPreferredBoards){
+            if(move.x / 3 == macroState.x && move.y / 3 == macroState.y && me == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating += 6;
             std::cerr << "myscore3: " << microRating << std::endl;
-            if(move.x % 3 == state.x && move.y % 3 == state.y)
-                microRating -= 3;
+            if(move.x % 3 == macroState.x && move.y % 3 == macroState.y && me == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating -= 6;
             std::cerr << "myscore4: " << microRating << std::endl;
         }
-        for(MacroState state : enemyPreferredBoards){
-            if(move.x / 3 == state.x && move.y / 3 == state.y)
-                microRating += 3;
+        for(MacroState macroState : enemyPreferredBoards){
+            if(move.x / 3 == macroState.x && move.y / 3 == macroState.y && other == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating += 6;
             std::cerr << "enemyscore3: " << microRating << std::endl;
-            if(move.x % 3 == state.x && move.y % 3 == state.y)
-                microRating -= 3;
+            if(move.x % 3 == macroState.x && move.y % 3 == macroState.y && other == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating -= 6;
+            std::cerr << "enemyscore4: " << microRating << std::endl;
+        }
+        for(MacroState macroState : myPreferredBoards){
+            if(move.x / 3 == macroState.x && move.y / 3 == macroState.y && me == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating += 4;
+            std::cerr << "myscore3: " << microRating << std::endl;
+            if(move.x % 3 == macroState.x && move.y % 3 == macroState.y && me == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating -= 4;
+            std::cerr << "myscore4: " << microRating << std::endl;
+        }
+        for(MacroState macroState : enemyPreferredBoards){
+            if(move.x / 3 == macroState.x && move.y / 3 == macroState.y && other == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating += 4;
+            std::cerr << "enemyscore3: " << microRating << std::endl;
+            if(move.x % 3 == macroState.x && move.y % 3 == macroState.y && other == ttt::IsWinnableBy(GetMicroState(state, move, false)))
+                microRating -= 4;
             std::cerr << "enemyscore4: " << microRating << std::endl;
         }
         std::cerr << "totalscore: " << microRating << std::endl;
@@ -185,8 +205,8 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
 
     auto nextMoves = ttt::GetMoves(nextBoard);
 
-    //if(ttt::CloseWin(nextBoard, me, true)) score -= 2;      // Making this move would allow the opponent to block my win next microboard
-    //if(ttt::CloseWin(nextBoard, me, false)) score -= 2;     // Making this move would allow the opponent to win the next microboard
+    if(ttt::CloseWin(nextBoard, me, true)) score -= 2;      // Making this move would allow the opponent to block my win next microboard
+    if(ttt::CloseWin(nextBoard, me, false)) score -= 2;     // Making this move would allow the opponent to win the next microboard
     if(nextMoves.size() == 0) score -= 4;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
 
     if(score != 0){
@@ -239,7 +259,7 @@ MicroState UTTTAI::GetMicroState(const State &state, const Move &move, bool getN
     return microState;
 }
 
-std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, const Player &me, const bool myWin){
+std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, const Player &me, const bool myWin, const int num){
     std::vector<MacroState> preferredBoards;
     Player other = me == Player::X ? Player::O : Player::X;
     State current;
@@ -268,14 +288,14 @@ std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, con
         }};
 
     for(std::array<MacroState, 3> win : wins) {
-        MacroState temp = MacroState{ -1, -1 };
+        std::vector<MacroState> temp;
         int count = 0;
 
         for (MacroState m : win) {
             if (current.macroboard[m.y][m.x] == me && myWin) count++;
             else if (current.macroboard[m.y][m.x] == other && !myWin) count++;
             else if (current.macroboard[m.y][m.x] == Player::None) {
-                temp = m;
+                temp.push_back(m);
             }
             else if (current.macroboard[m.y][m.x] != Player::None) {
                 count = 0;
@@ -283,9 +303,15 @@ std::vector<MacroState> UTTTAI::GetPreferredMacroBoards (const State &state, con
             }
         }
 
-        if(count == 2 && temp.x != -1 && temp.y != -1){
-            preferredBoards.push_back(temp);
-            std::cerr << "x y " << temp.x << temp.y << std::endl;
+        std::cerr << "count temp: " << temp.size() << std::endl;
+
+        if(count == num && !temp.empty()){
+            for(MacroState ms : temp){
+                preferredBoards.push_back(ms);
+                
+                std::cerr << "x y " << ms.x << ms.y << std::endl;
+            }
+            temp.clear();
         }
     }
 
