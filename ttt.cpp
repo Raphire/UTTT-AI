@@ -3,6 +3,7 @@
 
 #include "ttt.h"
 
+// Returns the winner (if any) of a given microboard
 Player ttt::GetWinner(const MicroState &b)
 {
     // Horizontal
@@ -22,6 +23,7 @@ Player ttt::GetWinner(const MicroState &b)
     return  Player::None;
 }
 
+// Checks if the given players has at least 1 occurrence of two in a row in the given microboard
 bool ttt::CloseWin(const MicroState &b, const Player &player)
 {
     // Horizontal
@@ -57,6 +59,7 @@ bool ttt::CloseWin(const MicroState &b, const Player &player)
     return false;
 }
 
+// Returns possible moves for a given microboard
 std::vector<int> ttt::GetMoves(const MicroState &b)
 {
     std::vector<int> moves = {};
@@ -66,6 +69,7 @@ std::vector<int> ttt::GetMoves(const MicroState &b)
     return moves;
 }
 
+// Returns what players would be able to still win the given microboard
 Player ttt::IsWinnableBy(const MicroState &b)
 {
     if(GetWinner(b) != Player::None) return Player::None;

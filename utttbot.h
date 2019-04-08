@@ -17,6 +17,7 @@ class UTTTBot {
 	int timebank;
 	int time_per_move;
 	std::string player_names[2];
+    int round;
 	std::string your_bot;
 	int your_botid;
 	bool firstMove = false;
@@ -30,7 +31,6 @@ class UTTTBot {
 public:
 	void run();
 
-    static int round;
     void input(std::basic_string<char> &basic_string);
 };
 

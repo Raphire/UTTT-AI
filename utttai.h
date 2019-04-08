@@ -16,7 +16,7 @@ struct MacroState {
 };
 
 class UTTTAI {
-    static std::vector<Move> findBestMicroMoves(const State &state, const std::vector<Move> &bestMoves, const Player &me);
+    static std::vector<Move> EvaluateBestMoves(const State &state, const std::vector<Move> &bestMoves, const Player &me);
 
     static int EvaluateState(const State &state, const Player &player);
     static int EvaluateMicroState(const MicroState &state, const Player &player);
