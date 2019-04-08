@@ -20,8 +20,6 @@ class UTTTBot {
 	std::string your_bot;
 	int your_botid;
 	bool firstMove = false;
-
-	int round;
 	State state;
 
 	std::vector<std::string> split(const std::string &s, char delim);
@@ -32,6 +30,7 @@ class UTTTBot {
 public:
 	void run();
 
+    static int round;
     void input(std::basic_string<char> &basic_string);
 };
 

@@ -10,7 +10,7 @@ class ttt {
 public:
     static std::vector<int> GetMoves(const MicroState & b);
     static Player GetWinner(const MicroState & b);
-    static bool CloseWin(const MicroState & b, const Player &me, const bool myWin);
+    static bool CloseWin(const MicroState & b, const Player &player);
     static Player IsWinnableBy(const MicroState & b);
 };
 
