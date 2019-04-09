@@ -24,7 +24,7 @@ Player ttt::GetWinner(const MicroState &b)
 }
 
 // Checks if the given players has at least 1 occurrence of two in a row in the given microboard
-bool ttt::CloseWin(const MicroState &b, const Player &player)
+bool ttt::CheckSetups(const MicroState &b, const Player &player)
 {
     // Horizontal
     if(b[0] == b[1] && b[2] == Player::None && b[0] == player) return true;
