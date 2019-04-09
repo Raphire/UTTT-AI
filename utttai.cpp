@@ -130,8 +130,8 @@ std::vector<Move>  UTTTAI::EvaluateBestMoves(const State &state, const std::vect
         std::cerr << "score2: " << microRating << std::endl;
 
         //Check if this move setups up two in a row for my bot
-        if(ttt::CheckSetups(GetMicroState(state, move, false), me))
-            microRating += 1;
+        if(!ttt::CheckSetups(GetMicroState(state, move, false), me), ttt::CheckSetups(GetMicroState(child, move, false), me))
+            microRating += 5;
 
         //Check if this move blocks an enemy setup of two in a row
         if(ttt::CheckSetups(GetMicroState(state, move, false), other) && !ttt::CheckSetups(
