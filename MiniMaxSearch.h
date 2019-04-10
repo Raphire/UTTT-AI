@@ -16,6 +16,9 @@ public:
     /// Evaluates a branch until maxDepth has been reached, returns according to evaluateEndNode function
     std::vector<int> evaluateBranch(const Node & node, int maxDepth);
 
+    /// Evaluates a branch as deep as possible until time-out has occurred
+    std::vector<int> evaluateBranchUntilTimeout(const Node & node, int timeOutInMs);
+
     /// Returns whether the last search evaluated the entire state tree with given depth
     bool getLastSearchFullyEvaluated();
 
@@ -53,6 +56,49 @@ std::vector<int> MiniMaxSearch<Node>::evaluateBranch(const Node &node, int maxDe
 
     for(Node child : children)
         scores.push_back(MiniMaxAB(child, maxDepth, false, -1, 1));
+
+    return scores;
+}
+
+template<class Node>
+std::vector<int> MiniMaxSearch<Node>::evaluateBranchUntilTimeout(const Node &node, int timeOutInMs)
+{
+    auto startTime = std::chrono::steady_clock::now();
+    nodesTraversed = 0;
+
+    std::vector<Node> children = findChildNodes(node);
+    std::vector<int> scores = std::vector<int>(children.size());
+    std::vector<bool> isChildFullyEvaluated = std::vector<bool>(children.size(), false);
+
+    int currentBranch = 0;
+    int depth = 2;
+
+    do {
+        // There's no need to evaluate this branch again if we already know its outcome
+        if(!isChildFullyEvaluated[currentBranch])
+        {
+            fullSearchDone = true; // Reset full search done tracker
+            scores[currentBranch] = MiniMaxAB(children[currentBranch], depth, false, -1, 1); // Evaluate current branch
+            isChildFullyEvaluated[currentBranch] = fullSearchDone; // Keep track of fully evaluated branches to improve performance
+        }
+        // Have all branches(moves) been evaluated for this depth?: Increase depth, reset branch pointer
+        if(currentBranch == children.size() - 1)
+        {
+            depth++;
+            currentBranch = 0;
+        }
+        else currentBranch++;
+
+    } while
+    (       // Stop search when timeout occurs, or search is completely done.
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() < timeOutInMs
+            &&
+            std::find(isChildFullyEvaluated.begin(), isChildFullyEvaluated.end(), false) != isChildFullyEvaluated.end()
+    );
+
+    // Update fullSearchDone for users outside of this class,
+    // next line evaluates whether any of the child branches haven't been fully evaluated
+    fullSearchDone = std::find(isChildFullyEvaluated.begin(), isChildFullyEvaluated.end(), false) == isChildFullyEvaluated.end();
 
     return scores;
 }
@@ -117,6 +163,5 @@ int MiniMaxSearch<Node>::getLastSearchNumNodesTraversed()
 {
     return nodesTraversed;
 }
-
 
 #endif //UTTTPROBESTBOTEUW_MINIMAXSEARCH_H

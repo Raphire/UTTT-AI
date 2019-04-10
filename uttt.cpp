@@ -92,10 +92,11 @@ std::vector<Move> uttt::getMoves(const State &state)
 {
 	std::vector<Move> moves;
 	if (state.winner == Player::None)
-		for (int r=0; r<9; r++)
-			for (int c=0; c<9; c++)
-				if (state.macroboard[c/3 + 3 * (r/3)] == Player::Active && state.board[r][c] == Player::None)
-					moves.push_back(Move{c,r});
+		for(int mb = 0; mb < state.macroboard.size(); mb++)
+		if(state.macroboard[mb] == Player::Active)
+			for(int md = 0; md < 9; md++)
+				if(state.subBoards[mb][md] == Player::None)
+					moves.push_back(Move{(mb % 3) * 3 + md % 3, mb / 3 * 3 + md / 3});
 
 	return moves;
 }

@@ -20,6 +20,9 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
             Log("Starting move search for round: " + args[0] + ", Turn #" + args[1] + "." , LogLevel::Info);
             Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
+        case STATE_ASSESSMENT_DONE:
+            Log("Assessment of state completed, match should be over within " + args[0] + " moves. \n", LogLevel::Info);
+            break;
         case BEGIN_ELIMINATION_OF_MOVES:
             Log("Starting elimination of moves. (" + args[0] + " ms)", LogLevel::Info);
             break;
@@ -40,10 +43,10 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
             Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
         case MINIMAX_SEARCH_FINISHED_ALL_EVALUATED:
-            Log("MiniMax successfully traversed entire game-tree traversing " + args[0] + " game states.", LogLevel::Info);
+            Log("MiniMax successfully traversed entire game-tree traversing " + args[0] + " game states @ " + args[1] + " States/ms.", LogLevel::Info);
             break;
         case MINIMAX_SEARCH_FINISHED:
-            Log("MiniMax finished after abort (Depth: " + args[0] + ", " + args[1] + " game states traversed).", LogLevel::Info);
+            Log("MiniMax finished after abort (Depth: " + args[0] + ", " + args[1] + " game states traversed @ " + args[2] + " States/ms).", LogLevel::Info);
             break;
         case ERROR_BOT_RECEIVED_UNKNOWN_INPUT:
             Log("Unknown command: " + args[0], LogLevel::Error);
