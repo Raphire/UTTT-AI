@@ -58,12 +58,25 @@ std::vector<int> TTTAI::GetSetupMoves(const Board &board, Player p)
     std::vector<int> cells = ttt::GetCellsOccupiedByPlayer(board, p);
 
     for(int w = 0; w < 8; w++) {
-        if (board[ttt::wins[w][0]] == p && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == Player::None)
-            moves.push_back(ttt::wins[w][0]);
-        if (board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][1]] == p && board[ttt::wins[w][2]] == Player::None)
+        int pi = -1;
+        if(board[ttt::wins[w][0]] == p && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == Player::None)
+        {
             moves.push_back(ttt::wins[w][1]);
-        if (board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][2]] == p)
             moves.push_back(ttt::wins[w][2]);
+        }
+
+        if(board[ttt::wins[w][1]] == p && board[ttt::wins[w][0]] == Player::None && board[ttt::wins[w][2]] == Player::None)
+        {
+            moves.push_back(ttt::wins[w][0]);
+            moves.push_back(ttt::wins[w][2]);
+        }
+
+        if(board[ttt::wins[w][2]] == p && board[ttt::wins[w][1]] == Player::None && board[ttt::wins[w][0]] == Player::None)
+        {
+            moves.push_back(ttt::wins[w][1]);
+            moves.push_back(ttt::wins[w][0]);
+        }
     }
+
     return moves;
 }

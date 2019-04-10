@@ -55,29 +55,29 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
     std::array<SelectionStage, 5> selectionStages =
             {
                     SelectionStage {
-                            "MiniMaxAB",
-                            100,
-                            UTTTAI::RateMovesWithMiniMaxAB
+                        "MiniMaxAB",
+                        100,
+                        UTTTAI::RateMovesByMiniMaxAB
                     },
                     SelectionStage {
-                            "Macro field selection",
-                            100,
-                            UTTTAI::RateMovesByMacroRelevance
+                        "Macro field selection",
+                        100,
+                        UTTTAI::RateMovesByMacroRelevance
                     },
                     SelectionStage {
-                            "TTT strategies",
-                            100,
-                            UTTTAI::RateMovesWithTTTStrats
+                        "TTT strategies",
+                        100,
+                        UTTTAI::RateMovesByTTTStrats
                     },
                     SelectionStage {
-                            "Position rating",
-                            100,
-                            UTTTAI::RateMovesWithPosition
+                        "Position rating",
+                        100,
+                        UTTTAI::RateMovesByPosition
                     },
                     SelectionStage {
-                            "Next board position",
-                            100,
-                            UTTTAI::RateMovesWithNextBoardPosition
+                        "Next board position",
+                        100,
+                        UTTTAI::RateMovesByNextBoardPosition
                     }
             };
 
@@ -125,12 +125,13 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
     std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
     std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
 
+    // TODO: This doesnt appear to select a random move from list, it just picks the first one...
     return *select_randomly(bestMoves.begin(), bestMoves.end());
 }
 
-std::vector<int> UTTTAI::RateMovesWithMiniMaxAB(const std::vector<Move> & moves, const AssessedState & assessedState)
+std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state)
 {
-    if(assessedState.state.round < 12) return std::vector<int>(moves.size()); // TODO: Guessed value (12)
+    if(state.state.round < 12) return std::vector<int>(moves.size()); // TODO: Guessed value (12)
 
     long long int timeElapsed;
     auto startTime = std::chrono::steady_clock::now();
@@ -143,7 +144,7 @@ std::vector<int> UTTTAI::RateMovesWithMiniMaxAB(const std::vector<Move> & moves,
         for (int i = 0; i < moves.size(); i++)
         {
             bool fullMoveTreeEvaluated = true;
-            State child = uttt::doMove(assessedState.state, moves[i]);
+            State child = uttt::doMove(state.state, moves[i]);
             ratings.push_back(TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, -100, +100, &fullMoveTreeEvaluated));
             if(!fullMoveTreeEvaluated) searchTreeExhausted = false;
         }
@@ -154,34 +155,34 @@ std::vector<int> UTTTAI::RateMovesWithMiniMaxAB(const std::vector<Move> & moves,
         searchDepth++; // Increase search depth for next iteration.
         timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
     }
-    while (timeElapsed * (56-assessedState.state.round) < assessedState.state.time_per_move); // TODO: Loop assumes branching factor to remain constant while it doesn't
+    while (timeElapsed * (56-state.state.round) < state.state.time_per_move); // TODO: Loop assumes branching factor to remain constant while it doesn't
 
     std::cerr << "Searched until depth: " << searchDepth << std::endl;
 
     return ratings;
 }
 
-std::vector<int> UTTTAI::RateMovesWithTTTStrats(const std::vector<Move> & moves, const AssessedState & assessedState)
+std::vector<int> UTTTAI::RateMovesByTTTStrats(const std::vector<Move> &moves, const AssessedState &state)
 {
     std::vector<int> ratings;
 
     for (int m = 0; m < moves.size(); m++)
-        ratings.push_back(TTTAI::RateMove(assessedState, moves[m]));
+        ratings.push_back(TTTAI::RateMove(state, moves[m]));
 
     return ratings;
 }
 
-std::vector<int> UTTTAI::RateMovesWithPosition(const std::vector<Move> &moves, const AssessedState &assessedState)
+std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> &moves, const AssessedState &state)
 {
     std::vector<int> ratings;
 
     for(int i = 0; i < moves.size(); i++)
-        ratings.push_back(RateByPosition(moves[i], assessedState));
+        ratings.push_back(RateByPosition(moves[i], state));
 
     return ratings;
 }
 
-std::vector<int> UTTTAI::RateMovesWithNextBoardPosition(const std::vector<Move> &moves, const AssessedState &assessedState)
+std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &moves, const AssessedState &state)
 {
     std::vector<int> ratings;
 
@@ -191,19 +192,32 @@ std::vector<int> UTTTAI::RateMovesWithNextBoardPosition(const std::vector<Move> 
         int macroMove = moves[i].x / 3 + 3 * (moves[i].y / 3);
         int nextMacroBoardIndex = moves[i].x % 3 + 3 * (moves[i].y % 3);
         if(macroMove == nextMacroBoardIndex)
-            nextSubBoard = ttt::DoMove(assessedState.state.subBoards[nextMacroBoardIndex], nextMacroBoardIndex, assessedState.state.player);
+            nextSubBoard = ttt::DoMove(state.state.subBoards[nextMacroBoardIndex], nextMacroBoardIndex, state.state.player);
         else
-            nextSubBoard = assessedState.state.subBoards[nextMacroBoardIndex];
+            nextSubBoard = state.state.subBoards[nextMacroBoardIndex];
 
         if(ttt::GetMoves(nextSubBoard).size() == 0) // Next player gets to choose which macro-field to play on...
             ratings.push_back(-20); // Allowing opponent to pick is a bad choice, and should only be done when there's no other option (At this point in elimination)
-        else // Preferably send the opponent to the least important macro-field
+        else // Preferably send the opponent to the least important macro-field, with the lowest winning chance
         {
             // A field that rates higher for defensive/offensive relevance will rate lower
             int rating = 0;
-            rating -= assessedState.macroFieldWorthsDefensive[nextMacroBoardIndex];
-            rating -= assessedState.macroFieldWorthsOffensive[nextMacroBoardIndex];
+            rating -= state.macroFieldWorthsDefensive[nextMacroBoardIndex];
+            rating -= state.macroFieldWorthsOffensive[nextMacroBoardIndex];
             ratings.push_back(rating);
+        }
+    }
+
+    std::vector<int> bestMoves = BestRatingIndicesOfList(ratings);
+    if(bestMoves.size() > 1 && bestMoves[0] != -20) // There's still moves that rate equally, try ranking them
+    {
+        // Moves making opponent play on a sub-board where he has a lower chance of winning rate higher
+        for(int i = 0; i < bestMoves.size(); i++)
+        {
+            int nextMacroBoardIndex = moves[bestMoves[i]].x % 3 + 3 * (moves[bestMoves[i]].y % 3);
+
+            ratings[bestMoves[i]] += state.minMovesToPartialLosses[nextMacroBoardIndex];
+            ratings[bestMoves[i]] -= state.minMovesToPartialWins[nextMacroBoardIndex];
         }
     }
 

@@ -66,10 +66,10 @@ public:
     static Move FindBestMove(const State &state, const int &timeout);
 
     /// Eliminator/Selector functions that rate given moves
-    static std::vector<int> RateMovesWithMiniMaxAB(const std::vector<Move> & moves, const AssessedState & state);
-    static std::vector<int> RateMovesWithTTTStrats(const std::vector<Move> & moves, const AssessedState & state);
-    static std::vector<int> RateMovesWithPosition(const std::vector<Move> & moves, const AssessedState & state);
-    static std::vector<int> RateMovesWithNextBoardPosition(const std::vector<Move> & moves, const AssessedState & state);
+    static std::vector<int> RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state);
+    static std::vector<int> RateMovesByTTTStrats(const std::vector<Move> &moves, const AssessedState &state);
+    static std::vector<int> RateMovesByPosition(const std::vector<Move> &moves, const AssessedState &state);
+    static std::vector<int> RateMovesByNextBoardPosition(const std::vector<Move> &moves, const AssessedState &state);
     static std::vector<int> RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState);
 
     /// Helper functions
