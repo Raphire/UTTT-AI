@@ -7,8 +7,8 @@
 #include "UTTTAI.h"
 #include "uttt.h"
 #include "ttt.h"
-#include "TreeSearch.h"
 #include "TTTAI.h"
+#include "MiniMaxSearch.h"
 
 int UTTTAI::EvaluateState(const State & state)
 {
@@ -23,8 +23,8 @@ std::vector<State> UTTTAI::GetChildStates(const State &state)
     std::vector<State> children;
     std::vector<Move> moves = uttt::getMoves(state);
 
-    for (Move m : moves)
-        children.push_back(uttt::doMove(state, m));
+    for(Move move:moves)
+        children.push_back(uttt::doMove(state, move));
 
     return children;
 }
@@ -87,7 +87,7 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
 
     std::cerr << "Assessing current state..." << std::endl;
     AssessedState assessedState = AssessState(state);
-    if(assessedState.potentialWinners == Player::Both) std::cerr << "Either player can technically still win this match, i should manually asses aggressiveness." << std::endl; // TODO: Compose function to assess balance of power + balanced strategy as function of BOP
+    if(assessedState.potentialWinners == Player::Both) std::cerr << "Either player can technically still win this match, i should manually assess aggressiveness." << std::endl; // TODO: Compose function to assess balance of power + balanced strategy as function of BOP
     else if(assessedState.potentialWinners == state.player) std::cerr << "Only this bot has a chance of winning, i should assume an offensive strategy." << std::endl; // TODO: Compose all-out offensive strategy
     else if(assessedState.potentialWinners == state.opponent) std::cerr << "Only the opponent has a chance of winning, i should assume a defensive strategy." << std::endl; // TODO: Compose defensive strategy
     else std::cerr << "Neither player can win this match, no reason to risk a timeout by dedicating cpu cycles to move selection." << std::endl;
@@ -132,31 +132,10 @@ std::vector<int> UTTTAI::RateMovesWithMiniMaxAB(const std::vector<Move> & moves,
 {
     if(assessedState.state.round < 12) return std::vector<int>(moves.size()); // TODO: Guessed value (12)
 
-    long long int timeElapsed;
     auto startTime = std::chrono::steady_clock::now();
-    std::vector<int> ratings;
-    int searchDepth = INITIAL_SEARCH_DEPTH;
 
-    do {
-        bool searchTreeExhausted = true;
-        ratings.clear();
-        for (int i = 0; i < moves.size(); i++)
-        {
-            bool fullMoveTreeEvaluated = true;
-            State child = uttt::doMove(assessedState.state, moves[i]);
-            ratings.push_back(TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, -100, +100, &fullMoveTreeEvaluated));
-            if(!fullMoveTreeEvaluated) searchTreeExhausted = false;
-        }
-        if(searchTreeExhausted) {
-            std::cerr << "MiniMax traversed entire game-state tree." << std::endl;
-            break;
-        }
-        searchDepth++; // Increase search depth for next iteration.
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
-    }
-    while (timeElapsed * (56-assessedState.state.round) < assessedState.state.time_per_move); // TODO: Loop assumes branching factor to remain constant while it doesn't
-
-    std::cerr << "Searched until depth: " << searchDepth << std::endl;
+    MiniMaxSearch<State> search = MiniMaxSearch<State>(EvaluateState, GetChildStates);
+    std::vector<int> ratings = search.evaluateBranchConcurrent(assessedState.state);
 
     return ratings;
 }

@@ -44,6 +44,9 @@ void UTTTBot::move(int timeout)
 
 	Move m = UTTTAI::FindBestMove(state, time_per_move);
 	std::cout << "place_disc " << m << std::endl;
+	std::cerr << "std::vector<std::string> input = {\"" << inputLines[0] << "\"";
+	for(int l = 1; l < inputLines.size(); l++) std::cerr << ",\"" << inputLines[l] << "\"";
+	std::cerr << "};" << std::endl;
 }
 
 void UTTTBot::update(std::string &key, std::string &value)

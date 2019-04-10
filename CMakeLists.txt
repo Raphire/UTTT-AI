@@ -3,4 +3,4 @@ project(utttprobestboteuw)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(utttprobestboteuw main.cpp TreeSearch.h uttt.cpp utttbot.cpp ttt.cpp TTTAI.cpp UTTTAI.cpp)
+add_executable(utttprobestboteuw main.cpp TreeSearch.h MiniMaxSearch.cpp uttt.cpp utttbot.cpp ttt.cpp TTTAI.cpp UTTTAI.cpp)
