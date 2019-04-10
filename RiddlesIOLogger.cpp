@@ -40,10 +40,10 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
             Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
         case MINIMAX_SEARCH_FINISHED_ALL_EVALUATED:
-            Log("MiniMax successfully traversed entire game-tree.", LogLevel::Info);
+            Log("MiniMax successfully traversed entire game-tree traversing " + args[0] + " game states.", LogLevel::Info);
             break;
         case MINIMAX_SEARCH_FINISHED:
-            Log("MiniMax finished after abort (Depth: " + args[0] + ").", LogLevel::Info);
+            Log("MiniMax finished after abort (Depth: " + args[0] + ", " + args[1] + " game states traversed).", LogLevel::Info);
             break;
         case ERROR_BOT_RECEIVED_UNKNOWN_INPUT:
             Log("Unknown command: " + args[0], LogLevel::Error);

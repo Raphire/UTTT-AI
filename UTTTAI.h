@@ -10,7 +10,7 @@
 #include "uttt.h"
 #include "ttt.h"
 
-#define INITIAL_SEARCH_DEPTH 1
+#define INITIAL_SEARCH_DEPTH 5
 
 /// Play-style of bot, AI might switch strategies in between rounds depending on each State's Assessment
 /// Aggressive play-style is preferred when bot is ahead to snowball into a win, when bot appears to fall behind

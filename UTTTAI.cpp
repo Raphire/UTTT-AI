@@ -11,6 +11,7 @@
 #include "TreeSearch.h"
 #include "TTTAI.h"
 #include "RiddlesIOLogger.h"
+#include "MiniMaxSearch.h"
 
 int UTTTAI::EvaluateState(const State & state)
 {
@@ -125,30 +126,29 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, co
 {
     if(state.state.round < 12) return std::vector<int>(moves.size()); // TODO: Guessed value (12)
 
-    long long int timeElapsed;
-    bool searchTreeExhausted;
     auto startTime = std::chrono::steady_clock::now();
+    long long int timeElapsed;
+
     std::vector<int> ratings;
+
     int searchDepth = INITIAL_SEARCH_DEPTH;
+    MiniMaxSearch<State> mms = MiniMaxSearch<State>(EvaluateState, GetChildStates);
 
     do {
-        searchTreeExhausted = true;
         ratings.clear();
-        for (int i = 0; i < moves.size(); i++)
-        {
-            bool fullMoveTreeEvaluated = true;
-            State child = uttt::doMove(state.state, moves[i]);
-            ratings.push_back(TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, -100, +100, &fullMoveTreeEvaluated));
-            if(!fullMoveTreeEvaluated) searchTreeExhausted = false;
-        }
-        if(searchTreeExhausted) break;
+        ratings = mms.evaluateBranch(state.state, INITIAL_SEARCH_DEPTH);
+
         searchDepth++; // Increase search depth for next iteration.
         timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
+
+        if(mms.getLastSearchFullyEvaluated()) break;
     }
     while (timeElapsed * (56-state.state.round) < state.state.time_per_move); // TODO: Loop assumes branching factor to remain constant while it doesn't
 
-    if(searchTreeExhausted) RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED_ALL_EVALUATED, {});
-    else RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED, {std::to_string(searchDepth)});
+    if(mms.getLastSearchFullyEvaluated())
+        RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED_ALL_EVALUATED, {std::to_string(mms.getLastSearchNumNodesTraversed())});
+    else
+        RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED, {std::to_string(searchDepth), std::to_string(mms.getLastSearchNumNodesTraversed())});
 
     return ratings;
 }
@@ -344,11 +344,7 @@ std::ostream & operator << (std::ostream &os, const std::vector<Move> &m)
 {
     if(m.size() == 0) return os;
 
-    os <<
-    "("
-    "X: " << m[0].x <<
-    " Y: " << m[0].y <<
-    ")";
+    os << "(X: " << m[0].x << " Y: " << m[0].y << ")";
 
     for(int mi = 1; mi < m.size(); mi++)
         os << ", (X: " << m[mi].x << " Y: " << m[mi].y << ")";
