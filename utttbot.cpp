@@ -30,7 +30,7 @@ void UTTTBot::input(std::string &line)
 	} else if (command[0] == "action" && command[1] == "move") {
 		move(std::stoi(command[2]));
 	} else {
-		std::cerr << "Unknown command: " << line << std::endl;
+		RiddlesIOLogger::Log(ERROR_BOT_RECEIVED_UNKNOWN_INPUT, {line});
 	}
 }
 
@@ -38,6 +38,7 @@ void UTTTBot::move(int timeout)
 {
 	int turn = round*2-1;
     state.turn = state.player;
+    this->timebank = timeout;
     if(state.player == Player::X) turn++;
 	RiddlesIOLogger::Log(BEGIN_OF_SEARCH, {std::to_string(round), std::to_string(turn)});
 

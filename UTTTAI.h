@@ -50,7 +50,10 @@ struct AssessedState {
     std::array<int, 8> minMovesToWin;
     std::array<int, 8> minMovesToLoose;
 
-    PlayStyle suggestedPlayStyle = PlayStyle::Balanced;
+    /// The max amount of moves that have to be played to fill up the rest of the entire board
+    /// Just use the factorial function on this number to get the maximum amount of states
+    /// you have to evaluate to find how a perfectly played match from this state will end.
+    int maxMovesRemaining;
 };
 
 struct SelectionStage {
@@ -76,7 +79,6 @@ public:
     static int EvaluateState(const State & state);
     static std::vector<State> GetChildStates(const State &state);
     static int RateByPosition(const Move & move, const AssessedState & assessedState);
-    static Board GetMacroBoardStripped(const State &state);
     static AssessedState AssessState(const State &state);
 
 };

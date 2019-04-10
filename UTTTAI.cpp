@@ -215,19 +215,14 @@ std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &m
     return ratings;
 }
 
-Board UTTTAI::GetMacroBoardStripped(const State &state)
-{
-    Board board = state.macroboard;
-    for(int i = 0; i < 9; i++)
-        if(board[i] == Player::Active) board[i] == Player::None;
-
-    return board;
-}
-
 AssessedState UTTTAI::AssessState(const State &state)
 {
     AssessedState assessedState;
     assessedState.state = state;
+
+    assessedState.maxMovesRemaining = 0;
+    for(Board b : state.subBoards)
+        assessedState.maxMovesRemaining += ttt::GetMoves(b).size();
 
     for(int b = 0; b < 9; b++) assessedState.minMovesToPartialWins[b] = ttt::GetMinimumMovesToWin(state.subBoards[b], state.player);
     for(int b = 0; b < 9; b++) assessedState.minMovesToPartialLosses[b] = ttt::GetMinimumMovesToWin(state.subBoards[b], state.opponent);
@@ -345,11 +340,15 @@ std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::
     return data;
 }
 
-std::ostream &operator<<(std::ostream &os, const std::vector<Move> &m)
+std::ostream & operator << (std::ostream &os, const std::vector<Move> &m)
 {
     if(m.size() == 0) return os;
 
-    os << "(X: " << m[0].x << " Y: " << m[0].y << ")";
+    os <<
+    "("
+    "X: " << m[0].x <<
+    " Y: " << m[0].y <<
+    ")";
 
     for(int mi = 1; mi < m.size(); mi++)
         os << ", (X: " << m[mi].x << " Y: " << m[mi].y << ")";
