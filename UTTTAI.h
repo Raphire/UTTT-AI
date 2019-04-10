@@ -81,6 +81,8 @@ public:
 
 };
 
+std::ostream &operator<<(std::ostream& os, const std::vector<Move> &m);
+
 static std::vector<int> BestRatingIndicesOfList(const std::vector<int> &vals);
 template<class O>
 static std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::vector<int> &indices);

@@ -4,6 +4,7 @@
 #include "utttbot.h"
 #include "TreeSearch.h"
 #include "UTTTAI.h"
+#include "RiddlesIOLogger.h"
 
 #include <iostream>
 #include <sstream>
@@ -36,11 +37,9 @@ void UTTTBot::input(std::string &line)
 void UTTTBot::move(int timeout)
 {
 	int turn = round*2-1;
-	if(state.player == Player::X) turn++;
-	std::cerr << "Starting move search for round: " << round << ", Turn #" << turn << "." << std::endl;
-	std::cerr << "-----------------------------------------------------------------" << std::endl;
-
-	state.turn = state.player;
+    state.turn = state.player;
+    if(state.player == Player::X) turn++;
+	RiddlesIOLogger::Log(BEGIN_OF_SEARCH, {std::to_string(round), std::to_string(turn)});
 
 	Move m = UTTTAI::FindBestMove(state, time_per_move);
 	std::cout << "place_disc " << m << std::endl;
@@ -84,7 +83,8 @@ void UTTTBot::update(std::string &key, std::string &value)
 	}
 }
 
-void UTTTBot::setting(std::string &key, std::string &value) {
+void UTTTBot::setting(std::string &key, std::string &value)
+{
 	if (key == "timebank") {
 	    firstMove = true;
 		timebank = std::stoi(value);

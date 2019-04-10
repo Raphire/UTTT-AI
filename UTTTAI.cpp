@@ -4,11 +4,13 @@
 
 #include <chrono>
 #include <algorithm>
+
 #include "UTTTAI.h"
 #include "uttt.h"
 #include "ttt.h"
 #include "TreeSearch.h"
 #include "TTTAI.h"
+#include "RiddlesIOLogger.h"
 
 int UTTTAI::EvaluateState(const State & state)
 {
@@ -85,48 +87,38 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
     std::vector<int> moveRatings;
     std::vector<Move> bestMoves = moves;
 
-    std::cerr << "Assessing current state..." << std::endl;
     AssessedState assessedState = AssessState(state);
-    if(assessedState.potentialWinners == Player::Both) std::cerr << "Either player can technically still win this match, i should manually asses aggressiveness." << std::endl; // TODO: Compose function to assess balance of power + balanced strategy as function of BOP
-    else if(assessedState.potentialWinners == state.player) std::cerr << "Only this bot has a chance of winning, i should assume an offensive strategy." << std::endl; // TODO: Compose all-out offensive strategy
-    else if(assessedState.potentialWinners == state.opponent) std::cerr << "Only the opponent has a chance of winning, i should assume a defensive strategy." << std::endl; // TODO: Compose defensive strategy
-    else std::cerr << "Neither player can win this match, no reason to risk a timeout by dedicating cpu cycles to move selection." << std::endl;
-    std::cerr << "-----------------------------------------------------------------" << std::endl;
 
     // Edge cases...
-    if (moves.empty()) std::cerr << "ERROR: Board appears to be full, yet AI is asked to pick a move!" << std::endl;
-    if (moves.size() == 1) return moves[0]; // Might occur later in matches
+    if (moves.empty()) RiddlesIOLogger::Log(ERROR_DO_MOVE_ON_FINISHED_GAME, {});
+    if (moves.size() == 1) return moves[0];
 
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-    std::cerr << "Starting elimination of moves. (" << timeElapsed << " ms)" << std::endl;
+    RiddlesIOLogger::Log(BEGIN_ELIMINATION_OF_MOVES, {std::to_string(timeElapsed)});
 
     for(int s = 0; s < selectionStages.size(); s++)
     {
         moveRatings = selectionStages[s].evaluate(bestMoves, assessedState);
         std::vector<Move> newBestMoves = PickValuesAtIndicesOfList(bestMoves, BestRatingIndicesOfList(moveRatings));
-
         timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-        std::cerr << "Stage #" << s+1 << " (" << selectionStages[s].name << ") eliminated " << bestMoves.size() - newBestMoves.size() << " of " << bestMoves.size() << " moves. (" << timeElapsed << " ms)" << std::endl;
-        std::cerr << "Highest rating moves are rated " << moveRatings[BestRatingIndicesOfList(moveRatings)[0]] << "." << std::endl << std::endl;
+
+        RiddlesIOLogger::Log(SELECTIONSTAGE_PASSED_SUMMARY,{std::to_string(s+1),selectionStages[s].name,std::to_string(bestMoves.size() - newBestMoves.size()),std::to_string(bestMoves.size()),std::to_string(timeElapsed),std::to_string(moveRatings[BestRatingIndicesOfList(moveRatings)[0]]),RiddlesIOLogger::MovesToString(newBestMoves)});
 
         if(newBestMoves.size() == 1)
         {
-            std::cerr << "Found a single best move, search done." << std::endl;
-            std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
-            std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
+            RiddlesIOLogger::Log(SINGLE_BEST_MOVE_FOUND, {RiddlesIOLogger::MovesToString({newBestMoves[0]})});
             return newBestMoves[0];
         }
-        else bestMoves = newBestMoves;
+        bestMoves = newBestMoves;
     }
 
     /// STAGE RANDOM
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
-    std::cerr << "Multiple optimal moves have been found. Selecting one randomly... (" << timeElapsed << " ms) " << std::endl;
-    std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
-    std::cerr << "---------------------------------------------------------------------------------------" << std::endl;
+    RiddlesIOLogger::Log(MULTIPLE_BEST_MOVES_FOUND, {std::to_string(timeElapsed), RiddlesIOLogger::MovesToString(bestMoves)});
 
     // TODO: This doesnt appear to select a random move from list, it just picks the first one...
-    return *select_randomly(bestMoves.begin(), bestMoves.end());
+    Move selected = *select_randomly(bestMoves.begin(), bestMoves.end());
+    return selected;
 }
 
 std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state)
@@ -134,12 +126,13 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, co
     if(state.state.round < 12) return std::vector<int>(moves.size()); // TODO: Guessed value (12)
 
     long long int timeElapsed;
+    bool searchTreeExhausted;
     auto startTime = std::chrono::steady_clock::now();
     std::vector<int> ratings;
     int searchDepth = INITIAL_SEARCH_DEPTH;
 
     do {
-        bool searchTreeExhausted = true;
+        searchTreeExhausted = true;
         ratings.clear();
         for (int i = 0; i < moves.size(); i++)
         {
@@ -148,16 +141,14 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, co
             ratings.push_back(TreeSearch::MiniMaxAB(child, EvaluateState, GetChildStates, searchDepth, false, -100, +100, &fullMoveTreeEvaluated));
             if(!fullMoveTreeEvaluated) searchTreeExhausted = false;
         }
-        if(searchTreeExhausted) {
-            std::cerr << "MiniMax traversed entire game-state tree." << std::endl;
-            break;
-        }
+        if(searchTreeExhausted) break;
         searchDepth++; // Increase search depth for next iteration.
         timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
     }
     while (timeElapsed * (56-state.state.round) < state.state.time_per_move); // TODO: Loop assumes branching factor to remain constant while it doesn't
 
-    std::cerr << "Searched until depth: " << searchDepth << std::endl;
+    if(searchTreeExhausted) RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED_ALL_EVALUATED, {});
+    else RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED, {std::to_string(searchDepth)});
 
     return ratings;
 }
@@ -352,6 +343,18 @@ std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::
     for(int i = 0; i < indices.size(); i++)
         data.push_back(list[indices[i]]);
     return data;
+}
+
+std::ostream &operator<<(std::ostream &os, const std::vector<Move> &m)
+{
+    if(m.size() == 0) return os;
+
+    os << "(X: " << m[0].x << " Y: " << m[0].y << ")";
+
+    for(int mi = 1; mi < m.size(); mi++)
+        os << ", (X: " << m[mi].x << " Y: " << m[mi].y << ")";
+
+    return os;
 }
 
 
