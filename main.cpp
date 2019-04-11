@@ -22,6 +22,7 @@ void test()
 
 int main()
 {
+    test();
 	UTTTBot bot;
 	bot.run();
 
