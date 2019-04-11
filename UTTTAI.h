@@ -25,8 +25,8 @@ struct AssessedState {
     std::vector<int> relevantMacroIndicesDefensive;
 
     /// In how many potential wins of bot/opponent is each sub-board relevant?
-    std::array<int, 9> macroFieldWorthsOffensive;
-    std::array<int, 9> macroFieldWorthsDefensive;
+    std::array<int, 9> macroFieldWorthOffensive;
+    std::array<int, 9> macroFieldWorthDefensive;
 
     /// For each win, how many moves does bot/opponent have to make to reach it?
     std::array<int, 8> minMovesToWin;
@@ -46,29 +46,45 @@ struct SelectionStage {
 class UTTTAI {
 
 public:
-    /// Main move selection function
+    /// Main move selection function.
     static Move FindBestMove(const State &state, const int &timeout);
 
-    /// Eliminator/Selector functions that rate given moves
-    static std::vector<int> RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state);
-    static std::vector<int> RateMovesByTTTStrats(const std::vector<Move> &moves, const AssessedState &state);
-    static std::vector<int> RateMovesByPosition(const std::vector<Move> &moves, const AssessedState &state);
-    static std::vector<int> RateMovesByNextBoardPosition(const std::vector<Move> &moves, const AssessedState &state);
+    /// Gathers data from a game-state and pre-processes certain variables.
+    static AssessedState AssessState(const State &state);
+
+
+    /// Rates moves by short term consequences they might have, eliminates worst moves but very resource intensive
+    static std::vector<int> RateMovesByMiniMaxAB(const std::vector<Move> & moves, const AssessedState & state);
+
+    /// Rates moves by their feasibility in a regular game of Tic-Tac-Toe.
+    static std::vector<int> RateMovesByTTTStrategies(const std::vector<Move> &moves, const AssessedState &state);
+
+    /// Rates moves by the potential limits they might impose on the opponent.
+    static std::vector<int> RateMovesByPosition(const std::vector<Move> & moves, const AssessedState & state);
+
+    /// Rates moves by the moves it might allow the opponent to make in their following moves.
+    static std::vector<int> RateMovesByNextBoardPosition(const std::vector<Move> & moves, const AssessedState & state);
+
+    /// Rates moves by the difference they might make in the macro-game
     static std::vector<int> RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState);
 
-    /// Helper functions
+
+    /// Helper function used by MiniMaxAB algorithm.
     static int EvaluateState(const State & state);
+
+    /// Helper function used by MiniMaxAB algorithm.
     static std::vector<State> GetChildStates(const State &state);
-    static int RateByPosition(const Move & move, const AssessedState & assessedState);
-    static AssessedState AssessState(const State &state);
 
 };
 
-std::ostream &operator<<(std::ostream& os, const std::vector<Move> &m);
+/// Operator overload to easily print lists of moves
+std::ostream & operator << (std::ostream& os, const std::vector<Move> &m);
 
+/// Helper function that returns the indices of the highest values in a vector
 static std::vector<int> BestRatingIndicesOfList(const std::vector<int> &vals);
-template<class O>
-static std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::vector<int> &indices);
 
+template<class O>
+/// Helper function that composes a list of values picked from a list by their indices
+static std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::vector<int> &indices);
 
 #endif

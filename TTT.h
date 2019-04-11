@@ -5,8 +5,8 @@
 
 using Board = std::array<Player, 9>;
 
+/// This class defines regular Tic-Tac-Toe game-flow and helper functions
 class TTT {
-
 public:
     static int wins [8][3];
 

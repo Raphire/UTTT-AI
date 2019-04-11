@@ -4,6 +4,7 @@
 #include "TTT.h"
 #include "UTTTAI.h"
 
+/// This class defines AI helper functions you could use in a regular game of Tic-Tac-Toe
 class TTTAI {
 public:
     /// Rates effectiveness of given move in a regular game of tic-tac-toe

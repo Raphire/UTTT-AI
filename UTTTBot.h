@@ -8,6 +8,7 @@
 
 #include "UTTT.h"
 
+/// This class handles communication between AI and the Riddles.io Ultimate Tic-Tac-Toe platform
 class UTTTBot {
 	int timebank;
 	int time_per_move;

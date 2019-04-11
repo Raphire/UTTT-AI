@@ -29,6 +29,7 @@ enum UTTTAIPredefinedMessageType {
     ERROR_BOT_RECEIVED_UNKNOWN_INPUT
 };
 
+/// Class used to help with logging on the Riddles.io platform
 class RiddlesIOLogger {
 public:
     static void Log(UTTTAIPredefinedMessageType, std::vector<std::string> args);

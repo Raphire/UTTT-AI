@@ -80,18 +80,25 @@ int TTT::GetMinimumMovesToWin(const std::array<Player, 9> &board, const Player &
     int result = 0;
     Player opponent = player == Player::X ? Player::O : Player::X;
 
+    // Loop through every set of positions that might represent a win.
     for (auto & win : wins)
     {
         int pCount = 0;
+        // If passed player's opponent hasn't played on any position of this win.
         if (board[win[0]] != opponent && board[win[1]] != opponent && board[win[2]] != opponent)
         {
+            // Count the amount of positions in this win that the player has occupied already.
             if(board[win[0]] == player) pCount++;
             if(board[win[1]] == player) pCount++;
             if(board[win[2]] == player) pCount++;
 
             int num = 3 - pCount;
+
+            // Save the distance to the win that the player is closest to.
             if(num < result || result == 0) result = num;
-        } else continue;
+
+        } else // It is no longer for this player to win by means of these combined positions.
+            continue; // Check for the other potential wins.
     }
 
     return result;

@@ -10,9 +10,9 @@
 int UTTTAI::EvaluateState(const State & state)
 {
     Player winner = state.winner;           // Is there a winner?
-    if (winner == state.player) return +1;	// Bot has won in evaluated state
-    if (winner == Player::None) return 0;	// No winner, rate state with heuristics
-    return -1;                              // Opponent has won in evaluated state
+    if (winner == Player::None) return 0;	// No winner here.
+    if (winner == state.player) return +1;	// Bot has won in evaluated state.
+    return -1;                              // Opponent has won in evaluated state.
 }
 
 std::vector<State> UTTTAI::GetChildStates(const State &state)
@@ -24,24 +24,6 @@ std::vector<State> UTTTAI::GetChildStates(const State &state)
         children.push_back(UTTT::doMove(state, m));
 
     return children;
-}
-
-int UTTTAI::RateByPosition(const Move & move, const AssessedState & assessedState)
-{
-    std::array<Player, 9> nextBoard = assessedState.state.subBoards[(move.x % 3) + 3 * (move.y % 3)];
-
-    auto nextMoves = TTT::GetMoves(nextBoard);
-    if(nextMoves.empty()) return -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
-    Player nextWinnableBy = TTT::IsWinnableForPlayer(nextBoard);
-
-    // This board can still be won by both players, it is still of good use
-    if(nextWinnableBy == Player::Both) return 0;
-
-    // Someone can still win on this board, but sending the opponent here would be better than previous options
-    if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) return 1;
-
-    // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-    if(nextWinnableBy == Player::None) return 2;
 }
 
 Move UTTTAI::FindBestMove(const State &state, const int &timeout)
@@ -61,7 +43,7 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
                     },
                     SelectionStage {
                         "TTT strategies",
-                        UTTTAI::RateMovesByTTTStrats
+                        UTTTAI::RateMovesByTTTStrategies
                     },
                     SelectionStage {
                         "Position rating",
@@ -79,50 +61,63 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
 
     AssessedState assessedState = AssessState(state);
 
-    // Edge cases...
+    // Edge cases.
     if (moves.empty()) RiddlesIOLogger::Log(ERROR_DO_MOVE_ON_FINISHED_GAME, {});
     if (moves.size() == 1) return moves[0];
 
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
     RiddlesIOLogger::Log(BEGIN_ELIMINATION_OF_MOVES, {std::to_string(timeElapsed)});
 
+    // Keep going through selection-stages until a single move remains.
     for(int s = 0; s < selectionStages.size(); s++)
     {
+        // Rate remaining moves with current selection stage.
         moveRatings = selectionStages[s].evaluate(bestMoves, assessedState);
-        std::vector<Move> newBestMoves = PickValuesAtIndicesOfList(bestMoves, BestRatingIndicesOfList(moveRatings));
-        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
 
+        // Find the highest rating moves and keep them in a separate list.
+        std::vector<Move> newBestMoves = PickValuesAtIndicesOfList(bestMoves, BestRatingIndicesOfList(moveRatings));
+
+        // Do some logging.
+        timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
         RiddlesIOLogger::Log(SELECTIONSTAGE_PASSED_SUMMARY,{std::to_string(s+1),selectionStages[s].name,std::to_string(bestMoves.size() - newBestMoves.size()),std::to_string(bestMoves.size()),std::to_string(timeElapsed),std::to_string(moveRatings[BestRatingIndicesOfList(moveRatings)[0]]),RiddlesIOLogger::MovesToString(newBestMoves)});
 
+        // If a single best move has been found, abort search and return it.
         if(newBestMoves.size() == 1)
         {
             RiddlesIOLogger::Log(SINGLE_BEST_MOVE_FOUND, {RiddlesIOLogger::MovesToString({newBestMoves[0]})});
             return newBestMoves[0];
         }
+
+        // Update the new best move for the next selection stage.
         bestMoves = newBestMoves;
     }
 
+    // Do some logging.
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
     RiddlesIOLogger::Log(MULTIPLE_BEST_MOVES_FOUND, {std::to_string(timeElapsed), RiddlesIOLogger::MovesToString(bestMoves)});
 
+    // Return best move.
     return bestMoves[0];
 }
 
 std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state)
 {
+    // No need to search for wins or losses very early in the game, time is precious.
     if(state.state.round < 9) return std::vector<int>(moves.size());
 
     auto startTime = std::chrono::steady_clock::now();
     long long int timeElapsed;
 
-    std::vector<int> ratings;
-
+    // Create MiniMax search, explain game-logic to MiniMax.
     MiniMaxSearch<State> mms = MiniMaxSearch<State>(EvaluateState, GetChildStates);
 
-    ratings = mms.evaluateBranchUntilTimeout(state.state, state.state.time_per_move);
+    // Use MiniMaxSearch to rate moves.
+    std::vector<int> ratings = mms.evaluateBranchUntilTimeout(state.state, state.state.time_per_move);
 
+    // Measure elapsed time for logging.
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
 
+    // Do some conditional logging.
     if(mms.getLastSearchFullyEvaluated())
         RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED_ALL_EVALUATED, {std::to_string(mms.getLastSearchNumNodesTraversed()), std::to_string(((double) mms.getLastSearchNumNodesTraversed()) / timeElapsed)});
     else
@@ -131,7 +126,7 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, co
     return ratings;
 }
 
-std::vector<int> UTTTAI::RateMovesByTTTStrats(const std::vector<Move> &moves, const AssessedState &state)
+std::vector<int> UTTTAI::RateMovesByTTTStrategies(const std::vector<Move> &moves, const AssessedState &state)
 {
     std::vector<int> ratings;
 
@@ -141,12 +136,32 @@ std::vector<int> UTTTAI::RateMovesByTTTStrats(const std::vector<Move> &moves, co
     return ratings;
 }
 
-std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> &moves, const AssessedState &state)
+// TODO: Revisit this function
+std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> & moves, const AssessedState & assessedState)
 {
     std::vector<int> ratings;
 
     for (auto move : moves)
-        ratings.push_back(RateByPosition(move, state));
+    {
+        int score = 0;
+
+        std::array<Player, 9> nextBoard = assessedState.state.subBoards[(move.x % 3) + 3 * (move.y % 3)];
+
+        auto nextMoves = TTT::GetMoves(nextBoard);
+        if(nextMoves.empty()) score = -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+        Player nextWinnableBy = TTT::IsWinnableForPlayer(nextBoard);
+
+        // This board can still be won by both players, it is still of good use
+        if(nextWinnableBy == Player::Both) score = 0;
+
+        // Someone can still win on this board, but sending the opponent here would be better than previous options
+        if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) score = 1;
+
+        // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
+        if(nextWinnableBy == Player::None) score = 2;
+
+        ratings.push_back(score);
+    }
 
     return ratings;
 }
@@ -166,14 +181,14 @@ std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &m
             nextSubBoard = state.state.subBoards[nextMacroBoardIndex];
 
         if(TTT::GetMoves(nextSubBoard).empty()) // Next player gets to choose which macro-field to play on.
-            ratings.push_back(-20);                 // Allowing opponent to pick is a bad choice, and should ...
-                                                    // ... only be done when there's no other option available.
+            ratings.push_back(-20);             // Allowing opponent to pick is a bad choice, and should ...
+                                                // ... only be done when there's no other option available.
         else
         {   // Preferably send the opponent to the least important macro-field, with the lowest winning chance.
             // A field that rates higher for defensive/offensive relevance will rate lower.
             int rating = 0;
-            rating -= state.macroFieldWorthsDefensive[nextMacroBoardIndex];
-            rating -= state.macroFieldWorthsOffensive[nextMacroBoardIndex];
+            rating -= state.macroFieldWorthDefensive[nextMacroBoardIndex];
+            rating -= state.macroFieldWorthOffensive[nextMacroBoardIndex];
             ratings.push_back(rating);
         }
     }
@@ -262,8 +277,8 @@ AssessedState UTTTAI::AssessState(const State &state)
 
     // Assess the offensive and defensive value of each macro-board, this can help us decide which
     // macro-board  we want to win first, or which one we do not want our opponent to win anytime soon...
-    for(int i = 0; i < 9; i++) assessedState.macroFieldWorthsOffensive[i] = std::count(assessedState.relevantMacroIndicesOffensive.begin(), assessedState.relevantMacroIndicesOffensive.end(), i);
-    for(int i = 0; i < 9; i++) assessedState.macroFieldWorthsDefensive[i] = std::count(assessedState.relevantMacroIndicesDefensive.begin(), assessedState.relevantMacroIndicesDefensive.end(), i);
+    for(int i = 0; i < 9; i++) assessedState.macroFieldWorthOffensive[i] = std::count(assessedState.relevantMacroIndicesOffensive.begin(), assessedState.relevantMacroIndicesOffensive.end(), i);
+    for(int i = 0; i < 9; i++) assessedState.macroFieldWorthDefensive[i] = std::count(assessedState.relevantMacroIndicesDefensive.begin(), assessedState.relevantMacroIndicesDefensive.end(), i);
 
     // Assess the minimum amount of moves each player has to make to reach their respective win conditions.
     for(int w = 0; w < 8; w++)
@@ -291,9 +306,12 @@ AssessedState UTTTAI::AssessState(const State &state)
 std::vector<int> UTTTAI::RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState)
 {
     std::vector<int> ratings;
-    for (auto move : moves) {
+    for (auto move : moves)
+    {
         int macroBoardIndex = move.x / 3 + 3 * (move.y / 3);
-        ratings.push_back(assessedState.macroFieldWorthsOffensive[macroBoardIndex] + assessedState.macroFieldWorthsDefensive[macroBoardIndex]);
+
+        // Use data in previously assessed state to rate move.
+        ratings.push_back(assessedState.macroFieldWorthOffensive[macroBoardIndex] + assessedState.macroFieldWorthDefensive[macroBoardIndex]);
     }
     return ratings;
 }
@@ -303,11 +321,15 @@ std::vector<int> BestRatingIndicesOfList(const std::vector<int> &vals)
     int bestVal = vals[0];
     std::vector<int> indicesOfHighestValues;
 
+    // Find the best value in this list.
     for (int val : vals)
-        if(val > bestVal) bestVal = val;
+        if(val > bestVal)
+            bestVal = val;
 
+    // Find the indices of the list that contain this value.
     for (int i = 0; i < vals.size(); i++)
-        if(vals[i] == bestVal) indicesOfHighestValues.push_back(i);
+        if(vals[i] == bestVal)
+            indicesOfHighestValues.push_back(i);
 
     return indicesOfHighestValues;
 }
@@ -316,8 +338,10 @@ template<class O>
 std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::vector<int> &indices)
 {
     std::vector<O> data;
+
     for (int indice : indices)
         data.push_back(list[indice]);
+
     return data;
 }
 
