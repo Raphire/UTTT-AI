@@ -3,4 +3,4 @@ project(utttprobestboteuw)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(utttprobestboteuw main.cpp uttt.cpp utttbot.cpp ttt.cpp TTTAI.cpp UTTTAI.cpp RiddlesIOLogger.cpp)
+add_executable(utttprobestboteuw main.cpp UTTT.cpp UTTTBot.cpp TTT.cpp TTTAI.cpp UTTTAI.cpp RiddlesIOLogger.cpp)

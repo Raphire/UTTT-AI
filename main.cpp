@@ -1,8 +1,8 @@
 // main.cpp
 // Aswin van Woudenberg
 
-#include "uttt.h"
-#include "utttbot.h"
+#include "UTTT.h"
+#include "UTTTBot.h"
 #include "UTTTAI.h"
 
 void test()

@@ -9,7 +9,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "uttt.h"
+#include "UTTT.h"
 
 class UTTTBot {
 	int timebank;

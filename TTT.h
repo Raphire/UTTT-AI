@@ -5,11 +5,11 @@
 #ifndef UTTTPROBESTBOTEUW_TTT_H
 #define UTTTPROBESTBOTEUW_TTT_H
 
-#include "uttt.h"
+#include "UTTT.h"
 
 using Board = std::array<Player, 9>;
 
-class ttt {
+class TTT {
 
 
 

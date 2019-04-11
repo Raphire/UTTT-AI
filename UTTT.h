@@ -1,4 +1,4 @@
-// uttt.h
+// UTTT.h
 // Aswin van Woudenberg
 
 #ifndef UTTT_H
@@ -62,7 +62,7 @@ std::ostream &operator<<(std::ostream& os, const State &s);
 std::ostream &operator<<(std::ostream& os, const Move &m);
 std::ostream &operator<<(std::ostream& os, const std::array<int, 9> &vals);
 
-class uttt {
+class UTTT {
 public:
     static State doMove(const State &state, const Move &m);
     static std::vector<Move> getMoves(const State &state);

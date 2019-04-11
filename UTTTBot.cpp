@@ -1,7 +1,7 @@
 // utttbot.cpp
 // Aswin van Woudenberg
 
-#include "utttbot.h"
+#include "UTTTBot.h"
 #include "TreeSearch.h"
 #include "UTTTAI.h"
 #include "RiddlesIOLogger.h"

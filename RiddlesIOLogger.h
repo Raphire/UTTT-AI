@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include "uttt.h"
+#include "UTTT.h"
 
 const int VISIBLE_LOG_LEVEL = 5;
 

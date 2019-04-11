@@ -5,7 +5,7 @@
 #ifndef UTTTPROBESTBOTEUW_TTTAI_H
 #define UTTTPROBESTBOTEUW_TTTAI_H
 
-#include "ttt.h"
+#include "TTT.h"
 #include "UTTTAI.h"
 
 class TTTAI {

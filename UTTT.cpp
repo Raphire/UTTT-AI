@@ -1,5 +1,5 @@
-#include "uttt.h"
-#include "ttt.h"
+#include "UTTT.h"
+#include "TTT.h"
 
 std::ostream &operator<<(std::ostream& os, const Player &p) {
 	if (p == Player::None) {
@@ -47,7 +47,7 @@ std::ostream &operator<<(std::ostream &os, const std::array<int, 9> &vals)
 	return os;
 }
 
-State uttt::doMove(const State &state, const Move &m)
+State UTTT::doMove(const State &state, const Move &m)
 {
 	State result = state;
 
@@ -62,7 +62,7 @@ State uttt::doMove(const State &state, const Move &m)
 	result.board[m.y][m.x] = player;
 	result.subBoards[macroMove][subMove] = player;
 
-	if(ttt::GetWinner(result.subBoards[macroMove]) == player)
+	if(TTT::GetWinner(result.subBoards[macroMove]) == player)
 		result.macroboard[macroMove] = player;
 
 	if(result.macroboard[subMove] == Player::X || result.macroboard[subMove] == Player::O) {
@@ -75,9 +75,9 @@ State uttt::doMove(const State &state, const Move &m)
 
 	if(result.round >= 9)
 		for(int w = 0; w < 8; w++)
-			if(result.macroboard[ttt::wins[w][0]] == player
-			&& result.macroboard[ttt::wins[w][0]] == result.macroboard[ttt::wins[w][1]]
-			&& result.macroboard[ttt::wins[w][1]] == result.macroboard[ttt::wins[w][2]])
+			if(result.macroboard[TTT::wins[w][0]] == player
+			&& result.macroboard[TTT::wins[w][0]] == result.macroboard[TTT::wins[w][1]]
+			&& result.macroboard[TTT::wins[w][1]] == result.macroboard[TTT::wins[w][2]])
 			{
 				result.winner = player;
 				break;
@@ -88,7 +88,7 @@ State uttt::doMove(const State &state, const Move &m)
 	return result; 
 }
 
-std::vector<Move> uttt::getMoves(const State &state)
+std::vector<Move> UTTT::getMoves(const State &state)
 {
 	std::vector<Move> moves;
 	if (state.winner == Player::None)
@@ -101,7 +101,7 @@ std::vector<Move> uttt::getMoves(const State &state)
 	return moves;
 }
 
-int uttt::GetMicroMove(const Move &m)
+int UTTT::GetMicroMove(const Move &m)
 {
 	int microX = m.x % 3;
 	int microY = m.y % 3;

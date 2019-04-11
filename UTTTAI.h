@@ -7,8 +7,8 @@
 
 #include <functional>
 
-#include "uttt.h"
-#include "ttt.h"
+#include "UTTT.h"
+#include "TTT.h"
 
 #define INITIAL_SEARCH_DEPTH 2
 

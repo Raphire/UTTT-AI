@@ -25,16 +25,27 @@ public:
     /// Returns the amount of nodes (game states) that were traversed during the last search
     int getLastSearchNumNodesTraversed();
 private:
-    /// Returns Object O's value of type V according to MiniMax algorithm with alpha-beta pruning.
-    /// This function should be applicable to any 2 player zero-sum game.
+
+    /// Evaluates the outcome of a perfectly-played match by either player (when depth limit is infinite)
+    /// This function should be applicable to about any 2 player - turn based - zero-sum game.
     /// https://en.wikipedia.org/wiki/Minimax#Minimax_algorithm_with_alternate_moves
     /// https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
-    /// Function arguments alpha and beta should be the worst and best value possible of type V, respectively.
+    /// - Node <branch>: The state to investigate, all its child-states will be examined with a depth of <depth>
+    /// - bool maximize: Whether or not player on the move in passed node will try to maximize score (as defined by evaluation function)
+    /// - int worstVal: the worst score possible; usually gained when losing the game
+    /// - int bestVal: the best score possible; usually gained when winning the game
     int MiniMaxAB(Node branch, int depth, bool maximize, int worstVal, int bestVal);
 
+    /// int Evaluate(Node n, Player positive): This function should evaluate a node and return its score
     int (*evaluateNode)(const Node &);
+
+    /// std::vector<Node> FindChildNodes(Node n): This function finds all valid next child states, explains game-logic to function
     std::vector<Node> (*findChildNodes)(const Node &);
+
+    /// Internally used to keep track of algorithm performance
     int nodesTraversed = 0;
+
+    /// Holds whether or not the last search done has been fully-completed (as depth-limit/timeout might abort alg prematurely
     bool fullSearchDone;
 };
 
@@ -103,13 +114,6 @@ std::vector<int> MiniMaxSearch<Node>::evaluateBranchUntilTimeout(const Node &nod
     return scores;
 }
 
-/// See: https://stackoverflow.com/questions/495021/why-can-templates-only-be-implemented-in-the-header-file
-/// - Node <branch>: The state to investigate, all its child-states will be examined with a depth of <depth>
-/// - int Evaluate(Node n, Player positive): This function should evaluate a node and return its score
-/// - std::vector<Node> FindChildNodes(Node n): This function finds all valid next child states, explains game-logic to function
-/// - bool maximize: Whether or not to maximize the player who is on move in root node 'branch'
-/// - int worstVal: the worst score possible; usually gained when losing the game (used for recursion, int min recommended)
-/// - int bestVal: the best score possible; usually gained when winning the game (used for recursion, int max recommended)
 template<class Node>
 int MiniMaxSearch<Node>::MiniMaxAB(Node branch, int depth, bool maximize, int worstVal, int bestVal)
 {
