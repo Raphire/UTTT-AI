@@ -1,9 +1,5 @@
-//
-// Created by Jorn on 10/04/2019.
-//
-
-#ifndef UTTTPROBESTBOTEUW_RIDDLESIOLOGGER_H
-#define UTTTPROBESTBOTEUW_RIDDLESIOLOGGER_H
+#ifndef RIDDLESIOLOGGER_H
+#define RIDDLESIOLOGGER_H
 
 #include <string>
 #include <vector>
@@ -42,4 +38,4 @@ public:
 };
 
 
-#endif //UTTTPROBESTBOTEUW_RIDDLESIOLOGGER_H
+#endif

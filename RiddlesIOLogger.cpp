@@ -1,10 +1,6 @@
-//
-// Created by Jorn on 10/04/2019.
-//
-
-#include <iostream>
-#include <sstream>
 #include "RiddlesIOLogger.h"
+
+#include <sstream>
 
 void RiddlesIOLogger::Log(std::string message, LogLevel level)
 {
@@ -63,7 +59,7 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
 std::string RiddlesIOLogger::MovesToString(std::vector<Move> m)
 {
     std::stringstream ss;
-    if(m.size() == 0) return ss.str();
+    if(m.empty()) return ss.str();
 
     ss << "(X: " << m[0].x << " Y: " << m[0].y << ")";
 

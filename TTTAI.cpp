@@ -1,14 +1,7 @@
-//
-// Created by Jorn on 04/04/2019.
-//
+#include "TTTAI.h"
 
 #include <algorithm>
 
-#include "TTTAI.h"
-#include "TTT.h"
-
-/// The following ratings only apply to SUB-games and therefore should
-/// only be used to rank different moves within the SAME sub-boards.
 int TTTAI::RateMove(const AssessedState & assessedState, const Move & move)
 {
     Board board = assessedState.state.subBoards[move.x / 3 + (move.y / 3) * 3];
@@ -44,10 +37,10 @@ std::vector<int> TTTAI::GetWinningMoves(const Board &board, Player p)
 {
     std::vector<int> moves;
 
-    for(int w = 0; w < 8; w++)
-        if(board[TTT::wins[w][0]] == p && board[TTT::wins[w][1]] == p) moves.push_back(TTT::wins[w][2]);
-        else if(board[TTT::wins[w][1]] == p && board[TTT::wins[w][2]] == p) moves.push_back(TTT::wins[w][0]);
-        else if(board[TTT::wins[w][0]] == p && board[TTT::wins[w][2]] == p) moves.push_back(TTT::wins[w][1]);
+    for (auto & win : TTT::wins)
+        if(board[win[0]] == p && board[win[1]] == p) moves.push_back(win[2]);
+        else if(board[win[1]] == p && board[win[2]] == p) moves.push_back(win[0]);
+        else if(board[win[0]] == p && board[win[2]] == p) moves.push_back(win[1]);
 
     return moves;
 }
@@ -57,24 +50,24 @@ std::vector<int> TTTAI::GetSetupMoves(const Board &board, Player p)
     std::vector<int> moves;
     std::vector<int> cells = TTT::GetCellsOccupiedByPlayer(board, p);
 
-    for(int w = 0; w < 8; w++) {
-        int pi = -1;
-        if(board[TTT::wins[w][0]] == p && board[TTT::wins[w][1]] == Player::None && board[TTT::wins[w][2]] == Player::None)
+    for (auto & win : TTT::wins)
+    {
+        if(board[win[0]] == p && board[win[1]] == Player::None && board[win[2]] == Player::None)
         {
-            moves.push_back(TTT::wins[w][1]);
-            moves.push_back(TTT::wins[w][2]);
+            moves.push_back(win[1]);
+            moves.push_back(win[2]);
         }
 
-        if(board[TTT::wins[w][1]] == p && board[TTT::wins[w][0]] == Player::None && board[TTT::wins[w][2]] == Player::None)
+        if(board[win[1]] == p && board[win[0]] == Player::None && board[win[2]] == Player::None)
         {
-            moves.push_back(TTT::wins[w][0]);
-            moves.push_back(TTT::wins[w][2]);
+            moves.push_back(win[0]);
+            moves.push_back(win[2]);
         }
 
-        if(board[TTT::wins[w][2]] == p && board[TTT::wins[w][1]] == Player::None && board[TTT::wins[w][0]] == Player::None)
+        if(board[win[2]] == p && board[win[1]] == Player::None && board[win[0]] == Player::None)
         {
-            moves.push_back(TTT::wins[w][1]);
-            moves.push_back(TTT::wins[w][0]);
+            moves.push_back(win[1]);
+            moves.push_back(win[0]);
         }
     }
 

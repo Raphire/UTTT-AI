@@ -1,11 +1,8 @@
-//
-// Created by Jorn on 10/04/2019.
-//
-
-#ifndef UTTTPROBESTBOTEUW_MINIMAXSEARCH_H
-#define UTTTPROBESTBOTEUW_MINIMAXSEARCH_H
+#ifndef MINIMAXSEARCH_H
+#define MINIMAXSEARCH_H
 
 #include <vector>
+#include <algorithm>
 
 template <class Node>
 class MiniMaxSearch {
@@ -43,7 +40,7 @@ private:
     std::vector<Node> (*findChildNodes)(const Node &);
 
     /// Internally used to keep track of algorithm performance
-    int nodesTraversed = 0;
+    int nodesTraversed;
 
     /// Holds whether or not the last search done has been fully-completed (as depth-limit/timeout might abort alg prematurely
     bool fullSearchDone;
@@ -54,6 +51,9 @@ MiniMaxSearch<Node>::MiniMaxSearch(int (*evaluateEndNode)(const Node &), std::ve
 {
     this->evaluateNode = evaluateEndNode;
     this->findChildNodes = findChildNodes;
+
+    nodesTraversed = 0;
+    fullSearchDone = false;
 }
 
 template<class Node>
@@ -168,4 +168,4 @@ int MiniMaxSearch<Node>::getLastSearchNumNodesTraversed()
     return nodesTraversed;
 }
 
-#endif //UTTTPROBESTBOTEUW_MINIMAXSEARCH_H
+#endif

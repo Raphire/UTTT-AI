@@ -1,24 +1,18 @@
-//
-// Created by Jorn on 04/04/2019.
-//
+#include "UTTTAI.h"
 
 #include <chrono>
-#include <algorithm>
 
-#include "UTTTAI.h"
-#include "UTTT.h"
-#include "TTT.h"
-#include "TreeSearch.h"
-#include "TTTAI.h"
 #include "RiddlesIOLogger.h"
 #include "MiniMaxSearch.h"
+#include "TTTAI.h"
+
 
 int UTTTAI::EvaluateState(const State & state)
 {
-    Player winner = state.winner;                           // Is there a winner?
-    if (winner == state.player) return +1;						// Bot has won in evaluated state
-    if (winner == Player::None) return 0;						// No winner, rate state with heuristics
-    return -1;                                               // Opponent has won in evaluated state
+    Player winner = state.winner;           // Is there a winner?
+    if (winner == state.player) return +1;	// Bot has won in evaluated state
+    if (winner == Player::None) return 0;	// No winner, rate state with heuristics
+    return -1;                              // Opponent has won in evaluated state
 }
 
 std::vector<State> UTTTAI::GetChildStates(const State &state)
@@ -37,7 +31,7 @@ int UTTTAI::RateByPosition(const Move & move, const AssessedState & assessedStat
     std::array<Player, 9> nextBoard = assessedState.state.subBoards[(move.x % 3) + 3 * (move.y % 3)];
 
     auto nextMoves = TTT::GetMoves(nextBoard);
-    if(nextMoves.size() == 0) return -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+    if(nextMoves.empty()) return -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
     Player nextWinnableBy = TTT::IsWinnableForPlayer(nextBoard);
 
     // This board can still be won by both players, it is still of good use
@@ -59,27 +53,22 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
             {
                     SelectionStage {
                         "MiniMaxAB",
-                        100,
                         UTTTAI::RateMovesByMiniMaxAB
                     },
                     SelectionStage {
                         "Macro field selection",
-                        100,
                         UTTTAI::RateMovesByMacroRelevance
                     },
                     SelectionStage {
                         "TTT strategies",
-                        100,
                         UTTTAI::RateMovesByTTTStrats
                     },
                     SelectionStage {
                         "Position rating",
-                        100,
                         UTTTAI::RateMovesByPosition
                     },
                     SelectionStage {
                         "Next board position",
-                        100,
                         UTTTAI::RateMovesByNextBoardPosition
                     }
             };
@@ -113,13 +102,10 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
         bestMoves = newBestMoves;
     }
 
-    /// STAGE RANDOM
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - turnStartTime).count();
     RiddlesIOLogger::Log(MULTIPLE_BEST_MOVES_FOUND, {std::to_string(timeElapsed), RiddlesIOLogger::MovesToString(bestMoves)});
 
-    // TODO: This doesnt appear to select a random move from list, it just picks the first one...
-    Move selected = *select_randomly(bestMoves.begin(), bestMoves.end());
-    return selected;
+    return bestMoves[0];
 }
 
 std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state)
@@ -149,8 +135,8 @@ std::vector<int> UTTTAI::RateMovesByTTTStrats(const std::vector<Move> &moves, co
 {
     std::vector<int> ratings;
 
-    for (int m = 0; m < moves.size(); m++)
-        ratings.push_back(TTTAI::RateMove(state, moves[m]));
+    for (auto move : moves)
+        ratings.push_back(TTTAI::RateMove(state, move));
 
     return ratings;
 }
@@ -159,8 +145,8 @@ std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> &moves, con
 {
     std::vector<int> ratings;
 
-    for(int i = 0; i < moves.size(); i++)
-        ratings.push_back(RateByPosition(moves[i], state));
+    for (auto move : moves)
+        ratings.push_back(RateByPosition(move, state));
 
     return ratings;
 }
@@ -169,21 +155,22 @@ std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &m
 {
     std::vector<int> ratings;
 
-    for(int i = 0; i < moves.size(); i++) {
-        std::array<Player, 9> nextSubBoard;
+    for (auto move : moves) {
+        std::array<Player, 9> nextSubBoard{Player::None};
 
-        int macroMove = moves[i].x / 3 + 3 * (moves[i].y / 3);
-        int nextMacroBoardIndex = moves[i].x % 3 + 3 * (moves[i].y % 3);
+        int macroMove = move.x / 3 + 3 * (move.y / 3);
+        int nextMacroBoardIndex = move.x % 3 + 3 * (move.y % 3);
         if(macroMove == nextMacroBoardIndex)
             nextSubBoard = TTT::DoMove(state.state.subBoards[nextMacroBoardIndex], nextMacroBoardIndex, state.state.player);
         else
             nextSubBoard = state.state.subBoards[nextMacroBoardIndex];
 
-        if(TTT::GetMoves(nextSubBoard).size() == 0) // Next player gets to choose which macro-field to play on...
-            ratings.push_back(-20); // Allowing opponent to pick is a bad choice, and should only be done when there's no other option (At this point in elimination)
-        else // Preferably send the opponent to the least important macro-field, with the lowest winning chance
-        {
-            // A field that rates higher for defensive/offensive relevance will rate lower
+        if(TTT::GetMoves(nextSubBoard).empty()) // Next player gets to choose which macro-field to play on.
+            ratings.push_back(-20);                 // Allowing opponent to pick is a bad choice, and should ...
+                                                    // ... only be done when there's no other option available.
+        else
+        {   // Preferably send the opponent to the least important macro-field, with the lowest winning chance.
+            // A field that rates higher for defensive/offensive relevance will rate lower.
             int rating = 0;
             rating -= state.macroFieldWorthsDefensive[nextMacroBoardIndex];
             rating -= state.macroFieldWorthsOffensive[nextMacroBoardIndex];
@@ -191,16 +178,18 @@ std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &m
         }
     }
 
+    // Fetch best rating moves
     std::vector<int> bestMoves = BestRatingIndicesOfList(ratings);
-    if(bestMoves.size() > 1 && bestMoves[0] != -20) // There's still moves that rate equally, try ranking them
+
+    // If there are still moves that rate equally, try ranking them
+    if(bestMoves.size() > 1 && bestMoves[0] != -20)
     {
         // Moves making opponent play on a sub-board where he has a lower chance of winning rate higher
-        for(int i = 0; i < bestMoves.size(); i++)
-        {
-            int nextMacroBoardIndex = moves[bestMoves[i]].x % 3 + 3 * (moves[bestMoves[i]].y % 3);
+        for (int bestMove : bestMoves) {
+            int nextMacroBoardIndex = moves[bestMove].x % 3 + 3 * (moves[bestMove].y % 3);
 
-            ratings[bestMoves[i]] += state.minMovesToPartialLosses[nextMacroBoardIndex];
-            ratings[bestMoves[i]] -= state.minMovesToPartialWins[nextMacroBoardIndex];
+            ratings[bestMove] += state.minMovesToPartialLosses[nextMacroBoardIndex];
+            ratings[bestMove] -= state.minMovesToPartialWins[nextMacroBoardIndex];
         }
     }
 
@@ -224,33 +213,32 @@ AssessedState UTTTAI::AssessState(const State &state)
 
     // Add indices of relevant macro-boards to list for every time it represents a win.
     // This will help us find out whether we want to send our opponent to such board.
-    for(int w = 0; w < 8; w++)
-    {
-        Player a = assessedState.potentialSubBoardWinners[TTT::wins[w][0]];
-        Player b = assessedState.potentialSubBoardWinners[TTT::wins[w][1]];
-        Player c = assessedState.potentialSubBoardWinners[TTT::wins[w][2]];
+    for (auto & win : TTT::wins) {
+        Player a = assessedState.potentialSubBoardWinners[win[0]];
+        Player b = assessedState.potentialSubBoardWinners[win[1]];
+        Player c = assessedState.potentialSubBoardWinners[win[2]];
 
         if(a == Player::None || b == Player::None || c == Player::None) continue; // a, b or c is never None after this point
         if(a == b && a == c && a == Player::Both) {
             assessedState.potentialWinners = Player::Both;
 
-            assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][0]);
-            assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][1]);
-            assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][2]);
+            assessedState.relevantMacroIndicesOffensive.push_back(win[0]);
+            assessedState.relevantMacroIndicesOffensive.push_back(win[1]);
+            assessedState.relevantMacroIndicesOffensive.push_back(win[2]);
 
-            assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][0]);
-            assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][1]);
-            assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][2]);
+            assessedState.relevantMacroIndicesDefensive.push_back(win[0]);
+            assessedState.relevantMacroIndicesDefensive.push_back(win[1]);
+            assessedState.relevantMacroIndicesDefensive.push_back(win[2]);
         }
         else if((a == Player::X || a == Player::Both) && (b == Player::X || b == Player::Both) && (c == Player::X || c == Player::Both)) {
             if(state.player == Player::X) {
-                assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][0]);
-                assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][1]);
-                assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][2]);
+                assessedState.relevantMacroIndicesOffensive.push_back(win[0]);
+                assessedState.relevantMacroIndicesOffensive.push_back(win[1]);
+                assessedState.relevantMacroIndicesOffensive.push_back(win[2]);
             } else {
-                assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][0]);
-                assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][1]);
-                assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][2]);
+                assessedState.relevantMacroIndicesDefensive.push_back(win[0]);
+                assessedState.relevantMacroIndicesDefensive.push_back(win[1]);
+                assessedState.relevantMacroIndicesDefensive.push_back(win[2]);
             }
 
             if(assessedState.potentialWinners == Player::O) assessedState.potentialWinners = Player::Both;
@@ -258,13 +246,13 @@ AssessedState UTTTAI::AssessState(const State &state)
         }
         else if((a == Player::O || a == Player::Both) && (b == Player::O || b == Player::Both) && (c == Player::O || c == Player::Both)) {
             if(state.player == Player::O) {
-                assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][0]);
-                assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][1]);
-                assessedState.relevantMacroIndicesOffensive.push_back(TTT::wins[w][2]);
+                assessedState.relevantMacroIndicesOffensive.push_back(win[0]);
+                assessedState.relevantMacroIndicesOffensive.push_back(win[1]);
+                assessedState.relevantMacroIndicesOffensive.push_back(win[2]);
             } else {
-                assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][0]);
-                assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][1]);
-                assessedState.relevantMacroIndicesDefensive.push_back(TTT::wins[w][2]);
+                assessedState.relevantMacroIndicesDefensive.push_back(win[0]);
+                assessedState.relevantMacroIndicesDefensive.push_back(win[1]);
+                assessedState.relevantMacroIndicesDefensive.push_back(win[2]);
             }
 
             if(assessedState.potentialWinners == Player::X) assessedState.potentialWinners = Player::Both;
@@ -303,9 +291,8 @@ AssessedState UTTTAI::AssessState(const State &state)
 std::vector<int> UTTTAI::RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState)
 {
     std::vector<int> ratings;
-    for(int m = 0; m < moves.size(); m++)
-    {
-        int macroBoardIndex = moves[m].x / 3 + 3 * (moves[m].y / 3);
+    for (auto move : moves) {
+        int macroBoardIndex = move.x / 3 + 3 * (move.y / 3);
         ratings.push_back(assessedState.macroFieldWorthsOffensive[macroBoardIndex] + assessedState.macroFieldWorthsDefensive[macroBoardIndex]);
     }
     return ratings;
@@ -316,8 +303,8 @@ std::vector<int> BestRatingIndicesOfList(const std::vector<int> &vals)
     int bestVal = vals[0];
     std::vector<int> indicesOfHighestValues;
 
-    for (int i = 0; i < vals.size(); i++)
-        if(vals[i] > bestVal) bestVal = vals[i];
+    for (int val : vals)
+        if(val > bestVal) bestVal = val;
 
     for (int i = 0; i < vals.size(); i++)
         if(vals[i] == bestVal) indicesOfHighestValues.push_back(i);
@@ -329,14 +316,14 @@ template<class O>
 std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::vector<int> &indices)
 {
     std::vector<O> data;
-    for(int i = 0; i < indices.size(); i++)
-        data.push_back(list[indices[i]]);
+    for (int indice : indices)
+        data.push_back(list[indice]);
     return data;
 }
 
 std::ostream & operator << (std::ostream &os, const std::vector<Move> &m)
 {
-    if(m.size() == 0) return os;
+    if(m.empty()) return os;
 
     os << "(X: " << m[0].x << " Y: " << m[0].y << ")";
 
@@ -345,7 +332,3 @@ std::ostream & operator << (std::ostream &os, const std::vector<Move> &m)
 
     return os;
 }
-
-
-
-

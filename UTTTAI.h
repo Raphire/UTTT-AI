@@ -1,28 +1,10 @@
-//
-// Created by Jorn on 04/04/2019.
-//
-
-#ifndef UTTTPROBESTBOTEUW_UTTTAI_H
-#define UTTTPROBESTBOTEUW_UTTTAI_H
+#ifndef UTTTAI_H
+#define UTTTAI_H
 
 #include <functional>
 
 #include "UTTT.h"
 #include "TTT.h"
-
-#define INITIAL_SEARCH_DEPTH 2
-
-/// Play-style of bot, AI might switch strategies in between rounds depending on each State's Assessment
-/// Aggressive play-style is preferred when bot is ahead to snowball into a win, when bot appears to fall behind
-/// it might switch into Defensive play-style to prevent a loss. When bot is first to move it should try to rush a
-/// win against its opponent while it is ahead, as starter's advantages might decay as the match progresses.
-// TODO: Implement various play-style's
-enum class PlayStyle {
-    Rush,
-    Aggressive,
-    Defensive,
-    Balanced
-};
 
 struct AssessedState {
     /// The state that has been assessed.
@@ -58,7 +40,6 @@ struct AssessedState {
 
 struct SelectionStage {
     std::string name;
-    int timeOut;
     std::function<std::vector<int> (const std::vector<Move> &, const AssessedState &)> evaluate;
 };
 
@@ -90,4 +71,4 @@ template<class O>
 static std::vector<O> PickValuesAtIndicesOfList(const std::vector<O> &list, const std::vector<int> &indices);
 
 
-#endif //UTTTPROBESTBOTEUW_UTTTAI_H
+#endif

@@ -1,6 +1,3 @@
-// utttbot.h
-// Aswin van Woudenberg
-
 #ifndef UTTTBOT_H
 #define UTTTBOT_H
 
@@ -18,7 +15,6 @@ class UTTTBot {
 	std::string player_names[2];
 	std::string your_bot;
 	int your_botid;
-	bool firstMove = true;
 	int round;
 	State state;
 
@@ -35,5 +31,5 @@ public:
 
 };
 
-#endif // UTTTBOT_H
+#endif
 

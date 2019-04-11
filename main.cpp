@@ -1,9 +1,4 @@
-// main.cpp
-// Aswin van Woudenberg
-
-#include "UTTT.h"
 #include "UTTTBot.h"
-#include "UTTTAI.h"
 
 void test()
 {
@@ -22,13 +17,11 @@ void test()
             "action move 10000"
 	};
 
-	for(int i = 0; i < input.size(); i++)
-	    bot.input(input[i]);
+	for (auto & i : input) bot.input(i);
 }
 
 int main()
 {
-	//test();
 	UTTTBot bot;
 	bot.run();
 

@@ -1,15 +1,9 @@
-// utttbot.cpp
-// Aswin van Woudenberg
-
 #include "UTTTBot.h"
-#include "TreeSearch.h"
-#include "UTTTAI.h"
-#include "RiddlesIOLogger.h"
 
-#include <iostream>
 #include <sstream>
-#include <chrono>
 
+#include "RiddlesIOLogger.h"
+#include "UTTTAI.h"
 
 void UTTTBot::run()
 {
@@ -53,8 +47,8 @@ void UTTTBot::update(std::string &key, std::string &value)
 		state.round = round;
 	} else if (key == "field") {
 		std::vector<std::string> fields = split(value, ',');
-		for(int r = 0; r < 9; r++)
-			for(int c = 0; c < 9; c++) {
+		for(int r = 0; r < 9; r++) {
+			for (int c = 0; c < 9; c++) {
 				int macroBoard = c / 3 + 3 * (r / 3);
 				int subMove = c % 3 + (r % 3) * 3;
 				if (fields[r * 9 + c] == "0") {
@@ -68,9 +62,10 @@ void UTTTBot::update(std::string &key, std::string &value)
 					state.subBoards[macroBoard][subMove] = Player::None;
 				}
 			}
+		}
 	} else if (key == "macroboard") {
 		std::vector<std::string> fields = split(value, ',');
-		for (int i = 0; i < 9; i++)
+		for (int i = 0; i < 9; i++) {
 			if (fields[i] == "-1") {
 				state.macroboard[i] = Player::Active;
 			} else if (fields[i] == "0") {
@@ -80,14 +75,13 @@ void UTTTBot::update(std::string &key, std::string &value)
 			} else {
 				state.macroboard[i] = Player::None;
 			}
-
+		}
 	}
 }
 
 void UTTTBot::setting(std::string &key, std::string &value)
 {
 	if (key == "timebank") {
-	    firstMove = true;
 		timebank = std::stoi(value);
 	} else if (key == "time_per_move") {
 		time_per_move = std::stoi(value);
@@ -107,13 +101,11 @@ void UTTTBot::setting(std::string &key, std::string &value)
 
 std::vector<std::string> UTTTBot::split(const std::string &s, char delim)
 {
-	std::vector<std::string> elems;
+	std::vector<std::string> elements;
 	std::stringstream ss(s);
 	std::string item;
-	while (std::getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
-	return elems;
+
+	while (std::getline(ss, item, delim)) elements.push_back(item);
+
+	return elements;
 }
-
-

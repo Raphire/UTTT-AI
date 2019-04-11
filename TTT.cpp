@@ -1,7 +1,3 @@
-//
-// Created by Jorn on 03/04/2019.
-//
-
 #include "TTT.h"
 
 int TTT::wins [8][3] = {
@@ -38,45 +34,11 @@ std::vector<int> TTT::GetMoves(const Board &b)
     return moves;
 }
 
-Player TTT::GetPlayer(const Board & b)
-{
-    int x = PlayerCount(b, Player::X);
-    int o = PlayerCount(b, Player::O);
-
-    if(x + o == 9) return Player::None;
-
-    int d = x - o;
-    if(d > 0) return Player::O;
-
-    return Player::X;
-}
-
-std::vector<Board> TTT::GetChildren(const Board &b)
-{
-    std::vector<Board> children = {};
-
-    std::vector<int> moves = GetMoves(b);
-    Player turn = GetPlayer(b);
-
-    for(int m = 0; m < moves.size(); m++)
-        children.push_back(DoMove(b, moves[m], turn));
-
-    return children;
-}
-
 Board TTT::DoMove(const Board &b, int &m, const Player &p)
 {
     Board newBoard = b;
     newBoard[m] = p;
     return newBoard;
-}
-
-int TTT::PlayerCount(const Board &b, const Player &p)
-{
-    int c = 0;
-    for(int i = 0; i < 9; i++)
-        if(b[i] == p) c++;
-    return c;
 }
 
 Player TTT::IsWinnableForPlayer(const Board &b)
@@ -87,13 +49,13 @@ Player TTT::IsWinnableForPlayer(const Board &b)
     Player winnableBy = Player::None;
 
     // Check if each win pos can still be occupied by each player
-    for(int w = 0; w < 8; w++)
+    for (auto & win : wins)
     {
-        if(b[wins[w][0]] != Player::X && b[wins[w][1]] != Player::X && b[wins[w][2]] != Player::X) // If player O can win this win
+        if(b[win[0]] != Player::X && b[win[1]] != Player::X && b[win[2]] != Player::X) // If player O can win this win
             if(winnableBy == Player::X) return Player::Both;
             else winnableBy = Player::O;
 
-        if(b[wins[w][0]] != Player::O && b[wins[w][1]] != Player::O && b[wins[w][2]] != Player::O) // If player O can win this win
+        if(b[win[0]] != Player::O && b[win[1]] != Player::O && b[win[2]] != Player::O) // If player O can win this win
             if(winnableBy == Player::O) return Player::Both;
             else winnableBy = Player::X;
     }
@@ -118,13 +80,14 @@ int TTT::GetMinimumMovesToWin(const std::array<Player, 9> &board, const Player &
     int result = 0;
     Player opponent = player == Player::X ? Player::O : Player::X;
 
-    for(int w = 0; w < 8; w++) {
+    for (auto & win : wins)
+    {
         int pCount = 0;
-        if (board[wins[w][0]] != opponent && board[wins[w][1]] != opponent && board[wins[w][2]] != opponent)
+        if (board[win[0]] != opponent && board[win[1]] != opponent && board[win[2]] != opponent)
         {
-            if(board[wins[w][0]] == player) pCount++;
-            if(board[wins[w][1]] == player) pCount++;
-            if(board[wins[w][2]] == player) pCount++;
+            if(board[win[0]] == player) pCount++;
+            if(board[win[1]] == player) pCount++;
+            if(board[win[2]] == player) pCount++;
 
             int num = 3 - pCount;
             if(num < result || result == 0) result = num;
@@ -133,5 +96,3 @@ int TTT::GetMinimumMovesToWin(const std::array<Player, 9> &board, const Player &
 
     return result;
 }
-
-
