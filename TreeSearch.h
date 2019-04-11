@@ -9,7 +9,7 @@
 class TreeSearch {
 public:
     template <class O>
-    static int MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, Player p, int worstVal, int bestVal, bool * isFullTreeEvaluated);
+    static int MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, Player p, int worstVal, int bestVal, bool *isFullTreeEvaluated);
 
 };
 
@@ -18,7 +18,7 @@ public:
 
 // treesearch.cpp
 template<class O>
-int TreeSearch::MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, Player p, int worstVal, int bestVal, bool * isFullTreeEvaluated)
+int TreeSearch::MiniMaxAB(O branch, int (*evaluate)(const O &, const Player &), std::vector<O> (*findChildNodes)(const O &), int depth, bool maximize, Player p, int worstVal, int bestVal, bool *isFullTreeEvaluated)
 {
     // Get all child nodes with function passed as argument
     auto children = findChildNodes(branch);

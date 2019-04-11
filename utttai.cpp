@@ -130,13 +130,12 @@ std::vector<Move>  UTTTAI::EvaluateBestMoves(const State &state, const std::vect
         std::cerr << "score2: " << microRating << std::endl;
 
         //Check if this move setups up two in a row for my bot
-        if(!ttt::CheckSetups(GetMicroState(state, move, false), me), ttt::CheckSetups(GetMicroState(child, move, false), me))
-            microRating += 5;
+        if(ttt::CheckSetups(GetMicroState(state, move, false), me) < ttt::CheckSetups(GetMicroState(child, move, false), me))
+            microRating += 4;
 
         //Check if this move blocks an enemy setup of two in a row
-        if(ttt::CheckSetups(GetMicroState(state, move, false), other) && !ttt::CheckSetups(
-                GetMicroState(child, move, false), other))
-            microRating += 3;
+        if(ttt::CheckSetups(GetMicroState(state, move, false), other) > ttt::CheckSetups(GetMicroState(child, move, false), other))
+            microRating += 5;
 
         std::cerr << "score3: " << microRating << std::endl;
 
@@ -151,8 +150,7 @@ std::vector<Move>  UTTTAI::EvaluateBestMoves(const State &state, const std::vect
                 }
                 if (enemyPreferredBoards.size() == 0) {
                     microRating += 3;
-                    if(!ttt::CheckSetups(GetMicroState(state, move, false), me) &&
-                            ttt::CheckSetups(GetMicroState(child, move, false), me))
+                    if(ttt::CheckSetups(GetMicroState(state, move, false), me) < ttt::CheckSetups(GetMicroState(child, move, false), me))
                         microRating += 3;
                 }
             } else if (move.x % 3 == macroState.x && move.y % 3 == macroState.y) {
@@ -177,8 +175,7 @@ std::vector<Move>  UTTTAI::EvaluateBestMoves(const State &state, const std::vect
                 }
                 if (myPreferredBoards.size() == 0) {
                     microRating += 3;
-                    if(enemyPreferredBoards.size() == 1 && ttt::CheckSetups(GetMicroState(state, move, false), other) && !ttt::CheckSetups(
-                            GetMicroState(child, move, false), other))
+                    if(enemyPreferredBoards.size() == 1 && ttt::CheckSetups(GetMicroState(state, move, false), other) > 0 && ttt::CheckSetups(GetMicroState(child, move, false), other) == 0)
                         microRating += 10;
                 }
             } else if (move.x % 3 == macroState.x && move.y % 3 == macroState.y) {
@@ -276,9 +273,9 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
 
     auto nextMoves = ttt::GetMoves(nextBoard);
 
-    if(ttt::CheckSetups(nextBoard, me)) score -= 2;            // Making this move would allow the opponent to block my win next microboard
-    if(ttt::CheckSetups(nextBoard, other)) score -= 2;         // Making this move would allow the opponent to win the next microboard
-    if(nextMoves.size() == 0) score -= 5;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
+    if(ttt::CheckSetups(nextBoard, me) > 0) score -= 3;            // Making this move would allow the opponent to block my win next microboard
+    if(ttt::CheckSetups(nextBoard, other) > 0) score -= 4;         // Making this move would allow the opponent to win the next microboard
+    if(nextMoves.size() == 0) score -= 11;                   // Making this move gives the opponent the most options, as he gets to choose from all microboards
 
     if(score != 0){
         return score;
@@ -293,7 +290,7 @@ int UTTTAI::EvaluateNextPossibilities(const MicroState &state, const Player &me)
     if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) return 1;
 
     // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-    if(nextWinnableBy == Player::None) return 5;
+    if(nextWinnableBy == Player::None) return 8;
 }
 
 // Get all possible childstates of a given state

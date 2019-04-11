@@ -24,39 +24,41 @@ Player ttt::GetWinner(const MicroState &b)
 }
 
 // Checks if the given players has at least 1 occurrence of two in a row in the given microboard
-bool ttt::CheckSetups(const MicroState &b, const Player &player)
+int ttt::CheckSetups(const MicroState &b, const Player &player)
 {
+    int count = 0;
+
     // Horizontal
-    if(b[0] == b[1] && b[2] == Player::None && b[0] == player) return true;
-    if(b[3] == b[4] && b[5] == Player::None && b[3] == player) return true;
-    if(b[6] == b[7] && b[7] == Player::None && b[6] == player) return true;
-    if(b[0] == b[2] && b[1] == Player::None && b[0] == player) return true;
-    if(b[3] == b[5] && b[4] == Player::None && b[3] == player) return true;
-    if(b[6] == b[8] && b[7] == Player::None && b[6] == player) return true;
-    if(b[1] == b[2] && b[0] == Player::None && b[1] == player) return true;
-    if(b[4] == b[5] && b[3] == Player::None && b[4] == player) return true;
-    if(b[7] == b[8] && b[6] == Player::None && b[7] == player) return true;
+    if(b[0] == b[1] && b[2] == Player::None && b[0] == player) count++;
+    if(b[3] == b[4] && b[5] == Player::None && b[3] == player) count++;
+    if(b[6] == b[7] && b[7] == Player::None && b[6] == player) count++;
+    if(b[0] == b[2] && b[1] == Player::None && b[0] == player) count++;
+    if(b[3] == b[5] && b[4] == Player::None && b[3] == player) count++;
+    if(b[6] == b[8] && b[7] == Player::None && b[6] == player) count++;
+    if(b[1] == b[2] && b[0] == Player::None && b[1] == player) count++;
+    if(b[4] == b[5] && b[3] == Player::None && b[4] == player) count++;
+    if(b[7] == b[8] && b[6] == Player::None && b[7] == player) count++;
 
     // Vertical
-    if(b[0] == b[3] && b[6] == Player::None && b[0] == player) return true;
-    if(b[1] == b[4] && b[7] == Player::None && b[1] == player) return true;
-    if(b[2] == b[5] && b[8] == Player::None && b[2] == player) return true;
-    if(b[0] == b[6] && b[3] == Player::None && b[0] == player) return true;
-    if(b[1] == b[7] && b[4] == Player::None && b[1] == player) return true;
-    if(b[2] == b[8] && b[5] == Player::None && b[2] == player) return true;
-    if(b[3] == b[6] && b[0] == Player::None && b[3] == player) return true;
-    if(b[4] == b[7] && b[1] == Player::None && b[4] == player) return true;
-    if(b[5] == b[8] && b[2] == Player::None && b[5] == player) return true;
+    if(b[0] == b[3] && b[6] == Player::None && b[0] == player) count++;
+    if(b[1] == b[4] && b[7] == Player::None && b[1] == player) count++;
+    if(b[2] == b[5] && b[8] == Player::None && b[2] == player) count++;
+    if(b[0] == b[6] && b[3] == Player::None && b[0] == player) count++;
+    if(b[1] == b[7] && b[4] == Player::None && b[1] == player) count++;
+    if(b[2] == b[8] && b[5] == Player::None && b[2] == player) count++;
+    if(b[3] == b[6] && b[0] == Player::None && b[3] == player) count++;
+    if(b[4] == b[7] && b[1] == Player::None && b[4] == player) count++;
+    if(b[5] == b[8] && b[2] == Player::None && b[5] == player) count++;
 
     // Diagonal
-    if(b[0] == b[4] && b[8] == Player::None && b[0] == player) return true;
-    if(b[2] == b[4] && b[6] == Player::None && b[2] == player) return true;
-    if(b[4] == b[8] && b[0] == Player::None && b[4] == player) return true;
-    if(b[4] == b[6] && b[2] == Player::None && b[4] == player) return true;
-    if(b[8] == b[0] && b[4] == Player::None && b[8] == player) return true;
-    if(b[6] == b[2] && b[4] == Player::None && b[6] == player) return true;
+    if(b[0] == b[4] && b[8] == Player::None && b[0] == player) count++;
+    if(b[2] == b[4] && b[6] == Player::None && b[2] == player) count++;
+    if(b[4] == b[8] && b[0] == Player::None && b[4] == player) count++;
+    if(b[4] == b[6] && b[2] == Player::None && b[4] == player) count++;
+    if(b[8] == b[0] && b[4] == Player::None && b[8] == player) count++;
+    if(b[6] == b[2] && b[4] == Player::None && b[6] == player) count++;
 
-    return false;
+    return count;
 }
 
 // Returns possible moves for a given microboard
