@@ -29,6 +29,7 @@ class UTTTBot {
 public:
 	void run();
     void input(std::string &line);
+    State getCurrentGameState() {return state;};
 
 };
 

@@ -38,6 +38,29 @@ void UTTTBot::move(int timeout)
 
 	Move m = UTTTAI::FindBestMove(state, time_per_move);
 	std::cout << "place_disc " << m << std::endl;
+
+	std::vector<std::string> inputLastRound;
+
+	// Copy bot-initialization input.
+	inputLastRound.insert(inputLastRound.end(), &inputLines[0], &inputLines[5]);
+	// Copy input given to bot to make it play last round.
+	inputLastRound.insert(inputLastRound.end(), &inputLines[inputLines.size() - 4], &inputLines[inputLines.size()]);
+
+	// Create line of code to create vector with input.
+	std::stringstream ss;
+	ss << "std::vector<std::string> lines = {";
+
+	// Input first line without comma.
+	ss << "\"" << inputLastRound[0] << "\"";
+
+	// Add each line to string separated by comma, surrounded by double quotes.
+	for(int i = 1; i < inputLastRound.size(); i++) ss << ", \"" << inputLastRound[i] << "\"";
+
+	// Conclude vector definition line.
+	ss << "};";
+
+
+	RiddlesIOLogger::Log(DEBUG_REPLAY_ROUND, {ss.str()});
 }
 
 void UTTTBot::update(std::string &key, std::string &value)
@@ -51,29 +74,23 @@ void UTTTBot::update(std::string &key, std::string &value)
 			for (int c = 0; c < 9; c++) {
 				int macroBoard = c / 3 + 3 * (r / 3);
 				int subMove = c % 3 + (r % 3) * 3;
-				if (fields[r * 9 + c] == "0") {
-					state.board[r][c] = Player::O;
-					state.subBoards[macroBoard][subMove] = Player::O;
-				} else if (fields[r * 9 + c] == "1") {
-					state.board[r][c] = Player::X;
-					state.subBoards[macroBoard][subMove] = Player::X;
-				} else {
-					state.board[r][c] = Player::None;
-					state.subBoards[macroBoard][subMove] = Player::None;
-				}
+				if (fields[r * 9 + c] == "0") state.subBoards[macroBoard][subMove] = Player::O;
+				else if (fields[r * 9 + c] == "1") state.subBoards[macroBoard][subMove] = Player::X;
+				else state.subBoards[macroBoard][subMove] = Player::None;
+
 			}
 		}
 	} else if (key == "macroboard") {
 		std::vector<std::string> fields = split(value, ',');
 		for (int i = 0; i < 9; i++) {
 			if (fields[i] == "-1") {
-				state.macroboard[i] = Player::Active;
+				state.macroBoard[i] = Player::Active;
 			} else if (fields[i] == "0") {
-				state.macroboard[i] = Player::O;
+				state.macroBoard[i] = Player::O;
 			} else if (fields[i] == "1") {
-				state.macroboard[i] = Player::X;
+				state.macroBoard[i] = Player::X;
 			} else {
-				state.macroboard[i] = Player::None;
+				state.macroBoard[i] = Player::None;
 			}
 		}
 	}

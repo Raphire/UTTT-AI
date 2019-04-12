@@ -26,7 +26,8 @@ enum UTTTAIPredefinedMessageType {
     MULTIPLE_BEST_MOVES_FOUND,
     MINIMAX_SEARCH_FINISHED,
     MINIMAX_SEARCH_FINISHED_ALL_EVALUATED,
-    ERROR_BOT_RECEIVED_UNKNOWN_INPUT
+    ERROR_BOT_RECEIVED_UNKNOWN_INPUT,
+    DEBUG_REPLAY_ROUND
 };
 
 /// Class used to help with logging on the Riddles.io platform

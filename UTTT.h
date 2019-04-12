@@ -19,10 +19,9 @@ enum class Player {
 };
 
 struct State {
-	std::array<std::array<Player,9>,9> board;
-	std::array<Player,9> macroboard;
-
 	std::array<std::array<Player,9>,9> subBoards;
+	std::array<Player,9> macroBoard;
+
 	Player turn = Player::O;
 	Player player, opponent;
 	int round = 1;
@@ -31,11 +30,7 @@ struct State {
     int time_per_move;
 
     State() {
-		for (int r=0; r<9; r++)
-			for (int c=0; c<9; c++)
-				board[r][c] = Player::None;
-		for (int i = 0; i < 9; i++)
-				macroboard[i] = Player::Active;
+		for (int i = 0; i < 9; i++) macroBoard[i] = Player::Active;
 	}
 };
 

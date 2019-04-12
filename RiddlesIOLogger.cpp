@@ -25,8 +25,6 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
         case MULTIPLE_BEST_MOVES_FOUND:
             Log("Multiple optimal moves have been found. Selecting one randomly... (" + args[0] + " ms)", LogLevel::Info);
             Log("Moves: " + args[1], LogLevel::Info);
-            Log("---------------------------------------------------------------------------------------", LogLevel::Info);
-            Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
         case SELECTIONSTAGE_PASSED_SUMMARY:
             Log("Stage #" + args[0] + " (" + args[1] + ") eliminated " + args[2] + " of " + args[3] + " moves. (" + args[4] + " ms)", LogLevel::Info);
@@ -35,20 +33,24 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
             break;
         case SINGLE_BEST_MOVE_FOUND:
             Log("Found a single best move (" + args[0] + "), search done.", LogLevel::Info);
-            Log("---------------------------------------------------------------------------------------", LogLevel::Info);
-            Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
         case MINIMAX_SEARCH_FINISHED_ALL_EVALUATED:
             Log("MiniMax successfully traversed entire game-tree traversing " + args[0] + " game states @ " + args[1] + " States/ms.", LogLevel::Info);
             break;
         case MINIMAX_SEARCH_FINISHED:
-            Log("MiniMax finished after abort (Depth: " + args[0] + " game states traversed @ " + args[1] + " States/ms).", LogLevel::Info);
+            Log("MiniMax finished after abort (" + args[0] + " game states traversed @ " + args[1] + " States/ms).", LogLevel::Info);
             break;
         case ERROR_BOT_RECEIVED_UNKNOWN_INPUT:
             Log("Unknown command: " + args[0], LogLevel::Error);
             break;
         case ERROR_DO_MOVE_ON_FINISHED_GAME:
             Log("Bot was asked to find a move on a finished match.", LogLevel::Error);
+            break;
+        case DEBUG_REPLAY_ROUND:
+            Log("---------------------------------------------------------------------------------------", LogLevel::Info);
+            Log("Copy this to repeat this round locally: ", LogLevel::Info);
+            Log(args[0], LogLevel::Info);
+            Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
         default:
             Log("Attempt to log unspecified message type.", LogLevel::Info);

@@ -6,26 +6,6 @@
 #include "MiniMaxSearch.h"
 #include "TTTAI.h"
 
-
-int UTTTAI::EvaluateState(const State & state)
-{
-    Player winner = state.winner;           // Is there a winner?
-    if (winner == Player::None) return 0;	// No winner here.
-    if (winner == state.player) return +1;	// Bot has won in evaluated state.
-    return -1;                              // Opponent has won in evaluated state.
-}
-
-std::vector<State> UTTTAI::GetChildStates(const State &state)
-{
-    std::vector<State> children;
-    std::vector<Move> moves = UTTT::getMoves(state);
-
-    for (Move m : moves)
-        children.push_back(UTTT::doMove(state, m));
-
-    return children;
-}
-
 Move UTTTAI::FindBestMove(const State &state, const int &timeout)
 {
     auto turnStartTime = std::chrono::steady_clock::now();
@@ -100,7 +80,7 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
     return bestMoves[0];
 }
 
-std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, const AssessedState &state)
+std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> & moves, const AssessedState & state)
 {
     // No need to search for wins or losses very early in the game, time is precious.
     if(state.state.round < 9) return std::vector<int>(moves.size());
@@ -126,6 +106,26 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> &moves, co
     return ratings;
 }
 
+int UTTTAI::EvaluateState(const State & state)
+{
+    Player winner = state.winner;           // Is there a winner?
+    if (winner == Player::None) return 0;	// No winner here.
+    if (winner == state.player) return +1;	// Bot has won in evaluated state.
+    return -1;                              // Opponent has won in evaluated state.
+}
+
+std::vector<State> UTTTAI::GetChildStates(const State &state)
+{
+    std::vector<State> children;
+    std::vector<Move> moves = UTTT::getMoves(state);
+
+    for (Move m : moves)
+        children.push_back(UTTT::doMove(state, m));
+
+    return children;
+}
+
+// TODO: Review if function behaves as expected
 std::vector<int> UTTTAI::RateMovesByTTTStrategies(const std::vector<Move> &moves, const AssessedState &state)
 {
     std::vector<int> ratings;
@@ -166,6 +166,7 @@ std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> & moves, co
     return ratings;
 }
 
+// TODO: Review if function behaves as expected
 std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &moves, const AssessedState &state)
 {
     std::vector<int> ratings;
@@ -211,6 +212,7 @@ std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &m
     return ratings;
 }
 
+// TODO: Review if function behaves as expected
 AssessedState UTTTAI::AssessState(const State &state)
 {
     AssessedState assessedState;
@@ -303,6 +305,7 @@ AssessedState UTTTAI::AssessState(const State &state)
     return assessedState;
 }
 
+// TODO: Review if function behaves as expected
 std::vector<int> UTTTAI::RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState)
 {
     std::vector<int> ratings;
