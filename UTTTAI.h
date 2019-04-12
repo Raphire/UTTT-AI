@@ -68,14 +68,36 @@ public:
     /// Rates moves by the difference they might make in the macro-game
     static std::vector<int> RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState);
 
-
     /// Helper function used by MiniMaxAB algorithm.
     static int EvaluateState(const State & state);
+
 
     /// Helper function used by MiniMaxAB algorithm.
     static std::vector<State> GetChildStates(const State &state);
 
 };
+
+namespace RatingDefinitions
+{
+    enum class MiniMax {
+        Win = 1,
+        Loose = -1,
+        Tie = 0
+    };
+
+    enum class Position {
+        Any = -1,
+        Winnable_for_both = 0,
+        Winnable_for_one = 1,
+        Unwinnable = 2
+    };
+
+    enum class TTTStrategies {
+        Win = 100,
+        Prevent_Loose = 50
+    };
+};
+
 
 /// Operator overload to easily print lists of moves
 std::ostream & operator << (std::ostream& os, const std::vector<Move> &m);

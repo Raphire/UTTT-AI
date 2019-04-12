@@ -17,8 +17,13 @@ int TTTAI::RateMove(const AssessedState & assessedState, const Move & move)
 
     int score = 0;
 
-    // Attacking moves are rated higher than defending moves as you already implicitly defend by winning a board.
-    if(std::find(winningMoves.begin(), winningMoves.end(), subMove) != winningMoves.end()) score = 100;
+    // Make win if possible
+    if(std::find(winningMoves.begin(), winningMoves.end(), subMove) != winningMoves.end())
+        return static_cast<int>(RatingDefinitions::TTTStrategies::Win);
+
+    // Only try to actively defend if there's a single winning move for opponent on this board
+    if(defendingMoves.size() == 1 && defendingMoves[0] == subMove)
+        return static_cast<int>(RatingDefinitions::TTTStrategies::Prevent_Loose);
 
     if(winningMoves.empty())
     {
