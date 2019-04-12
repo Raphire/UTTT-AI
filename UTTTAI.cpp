@@ -215,94 +215,74 @@ std::vector<int> UTTTAI::RateMovesByNextBoardPosition(const std::vector<Move> &m
 // TODO: Review if function behaves as expected
 AssessedState UTTTAI::AssessState(const State &state)
 {
-    AssessedState assessedState;
-    assessedState.state = state;
+    AssessedState as;
+    as.state = state;
 
-    assessedState.maxMovesRemaining = 0;
+    as.maxMovesRemaining = 0;
     for(Board b : state.subBoards)
-        assessedState.maxMovesRemaining += TTT::GetMoves(b).size();
+        as.maxMovesRemaining += TTT::GetMoves(b).size();
 
-    for(int b = 0; b < 9; b++) assessedState.minMovesToPartialWins[b] = TTT::GetMinimumMovesToWin(state.subBoards[b], state.player);
-    for(int b = 0; b < 9; b++) assessedState.minMovesToPartialLosses[b] = TTT::GetMinimumMovesToWin(state.subBoards[b], state.opponent);
+    for(int b = 0; b < 9; b++) as.minMovesToPartialWins[b] = TTT::GetMinimumMovesToWin(state.subBoards[b], state.player);
+    for(int b = 0; b < 9; b++) as.minMovesToPartialLosses[b] = TTT::GetMinimumMovesToWin(state.subBoards[b], state.opponent);
 
     // Find out whether or not each sub-board can be won by which player(s)
-    for(int b = 0; b < state.subBoards.size(); b++) assessedState.potentialSubBoardWinners[b] = TTT::IsWinnableForPlayer(state.subBoards[b]);
+    for(int b = 0; b < state.subBoards.size(); b++) as.potentialSubBoardWinners[b] = TTT::IsWinnableForPlayer(state.subBoards[b]);
 
     // Add indices of relevant macro-boards to list for every time it represents a win.
     // This will help us find out whether we want to send our opponent to such board.
     for (auto & win : TTT::wins) {
-        Player a = assessedState.potentialSubBoardWinners[win[0]];
-        Player b = assessedState.potentialSubBoardWinners[win[1]];
-        Player c = assessedState.potentialSubBoardWinners[win[2]];
+        Player a = as.potentialSubBoardWinners[win[0]];
+        Player b = as.potentialSubBoardWinners[win[1]];
+        Player c = as.potentialSubBoardWinners[win[2]];
 
         if(a == Player::None || b == Player::None || c == Player::None) continue; // a, b or c is never None after this point
         if(a == b && a == c && a == Player::Both) {
-            assessedState.potentialWinners = Player::Both;
-
-            assessedState.relevantMacroIndicesOffensive.push_back(win[0]);
-            assessedState.relevantMacroIndicesOffensive.push_back(win[1]);
-            assessedState.relevantMacroIndicesOffensive.push_back(win[2]);
-
-            assessedState.relevantMacroIndicesDefensive.push_back(win[0]);
-            assessedState.relevantMacroIndicesDefensive.push_back(win[1]);
-            assessedState.relevantMacroIndicesDefensive.push_back(win[2]);
+            as.potentialWinners = Player::Both;
+            as.relevantMacroIndicesOffensive.insert(as.relevantMacroIndicesOffensive.end(), &win[0], &win[3]);
+            as.relevantMacroIndicesDefensive.insert(as.relevantMacroIndicesDefensive.end(), &win[0], &win[3]);
         }
         else if((a == Player::X || a == Player::Both) && (b == Player::X || b == Player::Both) && (c == Player::X || c == Player::Both)) {
-            if(state.player == Player::X) {
-                assessedState.relevantMacroIndicesOffensive.push_back(win[0]);
-                assessedState.relevantMacroIndicesOffensive.push_back(win[1]);
-                assessedState.relevantMacroIndicesOffensive.push_back(win[2]);
-            } else {
-                assessedState.relevantMacroIndicesDefensive.push_back(win[0]);
-                assessedState.relevantMacroIndicesDefensive.push_back(win[1]);
-                assessedState.relevantMacroIndicesDefensive.push_back(win[2]);
-            }
+            if(state.player == Player::X) as.relevantMacroIndicesOffensive.insert(as.relevantMacroIndicesOffensive.end(), &win[0], &win[3]);
+            else as.relevantMacroIndicesDefensive.insert(as.relevantMacroIndicesDefensive.end(), &win[0], &win[3]);
 
-            if(assessedState.potentialWinners == Player::O) assessedState.potentialWinners = Player::Both;
-            else if(assessedState.potentialWinners != Player::Both) assessedState.potentialWinners = Player::X;
+            if(as.potentialWinners == Player::O) as.potentialWinners = Player::Both;
+            else if(as.potentialWinners != Player::Both) as.potentialWinners = Player::X;
         }
         else if((a == Player::O || a == Player::Both) && (b == Player::O || b == Player::Both) && (c == Player::O || c == Player::Both)) {
-            if(state.player == Player::O) {
-                assessedState.relevantMacroIndicesOffensive.push_back(win[0]);
-                assessedState.relevantMacroIndicesOffensive.push_back(win[1]);
-                assessedState.relevantMacroIndicesOffensive.push_back(win[2]);
-            } else {
-                assessedState.relevantMacroIndicesDefensive.push_back(win[0]);
-                assessedState.relevantMacroIndicesDefensive.push_back(win[1]);
-                assessedState.relevantMacroIndicesDefensive.push_back(win[2]);
-            }
+            if(state.player == Player::O) as.relevantMacroIndicesOffensive.insert(as.relevantMacroIndicesOffensive.end(), &win[0], &win[3]);
+            else as.relevantMacroIndicesDefensive.insert(as.relevantMacroIndicesDefensive.end(), &win[0], &win[3]);
 
-            if(assessedState.potentialWinners == Player::X) assessedState.potentialWinners = Player::Both;
-            else if(assessedState.potentialWinners != Player::Both) assessedState.potentialWinners = Player::O;
+            if(as.potentialWinners == Player::X) as.potentialWinners = Player::Both;
+            else if(as.potentialWinners != Player::Both) as.potentialWinners = Player::O;
         }
     }
 
     // Assess the offensive and defensive value of each macro-board, this can help us decide which
     // macro-board  we want to win first, or which one we do not want our opponent to win anytime soon...
-    for(int i = 0; i < 9; i++) assessedState.macroFieldWorthOffensive[i] = std::count(assessedState.relevantMacroIndicesOffensive.begin(), assessedState.relevantMacroIndicesOffensive.end(), i);
-    for(int i = 0; i < 9; i++) assessedState.macroFieldWorthDefensive[i] = std::count(assessedState.relevantMacroIndicesDefensive.begin(), assessedState.relevantMacroIndicesDefensive.end(), i);
+    for(int i = 0; i < 9; i++) as.macroFieldWorthOffensive[i] = std::count(as.relevantMacroIndicesOffensive.begin(), as.relevantMacroIndicesOffensive.end(), i);
+    for(int i = 0; i < 9; i++) as.macroFieldWorthDefensive[i] = std::count(as.relevantMacroIndicesDefensive.begin(), as.relevantMacroIndicesDefensive.end(), i);
 
     // Assess the minimum amount of moves each player has to make to reach their respective win conditions.
     for(int w = 0; w < 8; w++)
     {
-        if(std::find(assessedState.relevantMacroIndicesOffensive.begin(), assessedState.relevantMacroIndicesOffensive.end(), TTT::wins[w][0]) != assessedState.relevantMacroIndicesOffensive.end()
-           && std::find(assessedState.relevantMacroIndicesOffensive.begin(), assessedState.relevantMacroIndicesOffensive.end(), TTT::wins[w][1]) != assessedState.relevantMacroIndicesOffensive.end()
-           && std::find(assessedState.relevantMacroIndicesOffensive.begin(), assessedState.relevantMacroIndicesOffensive.end(), TTT::wins[w][2]) != assessedState.relevantMacroIndicesOffensive.end())
-            assessedState.minMovesToWin[w] = assessedState.minMovesToPartialWins[TTT::wins[w][0]] + assessedState.minMovesToPartialWins[TTT::wins[w][1]] + assessedState.minMovesToPartialWins[TTT::wins[w][2]];
+        if(std::find(as.relevantMacroIndicesOffensive.begin(), as.relevantMacroIndicesOffensive.end(), TTT::wins[w][0]) != as.relevantMacroIndicesOffensive.end()
+           && std::find(as.relevantMacroIndicesOffensive.begin(), as.relevantMacroIndicesOffensive.end(), TTT::wins[w][1]) != as.relevantMacroIndicesOffensive.end()
+           && std::find(as.relevantMacroIndicesOffensive.begin(), as.relevantMacroIndicesOffensive.end(), TTT::wins[w][2]) != as.relevantMacroIndicesOffensive.end())
+            as.minMovesToWin[w] = as.minMovesToPartialWins[TTT::wins[w][0]] + as.minMovesToPartialWins[TTT::wins[w][1]] + as.minMovesToPartialWins[TTT::wins[w][2]];
         else
-            assessedState.minMovesToWin[w] = 0;
+            as.minMovesToWin[w] = 0;
 
-        if(std::find(assessedState.relevantMacroIndicesDefensive.begin(), assessedState.relevantMacroIndicesDefensive.end(), TTT::wins[w][0]) != assessedState.relevantMacroIndicesDefensive.end()
-           && std::find(assessedState.relevantMacroIndicesDefensive.begin(), assessedState.relevantMacroIndicesDefensive.end(), TTT::wins[w][1]) != assessedState.relevantMacroIndicesDefensive.end()
-           && std::find(assessedState.relevantMacroIndicesDefensive.begin(), assessedState.relevantMacroIndicesDefensive.end(), TTT::wins[w][2]) != assessedState.relevantMacroIndicesDefensive.end())
-            assessedState.minMovesToLoose[w] = assessedState.minMovesToPartialLosses[TTT::wins[w][0]] + assessedState.minMovesToPartialLosses[TTT::wins[w][1]] + assessedState.minMovesToPartialLosses[TTT::wins[w][2]];
+        if(std::find(as.relevantMacroIndicesDefensive.begin(), as.relevantMacroIndicesDefensive.end(), TTT::wins[w][0]) != as.relevantMacroIndicesDefensive.end()
+           && std::find(as.relevantMacroIndicesDefensive.begin(), as.relevantMacroIndicesDefensive.end(), TTT::wins[w][1]) != as.relevantMacroIndicesDefensive.end()
+           && std::find(as.relevantMacroIndicesDefensive.begin(), as.relevantMacroIndicesDefensive.end(), TTT::wins[w][2]) != as.relevantMacroIndicesDefensive.end())
+            as.minMovesToLoose[w] = as.minMovesToPartialLosses[TTT::wins[w][0]] + as.minMovesToPartialLosses[TTT::wins[w][1]] + as.minMovesToPartialLosses[TTT::wins[w][2]];
         else
-            assessedState.minMovesToLoose[w] = 0;
+            as.minMovesToLoose[w] = 0;
     }
 
-    RiddlesIOLogger::Log(STATE_ASSESSMENT_DONE, {std::to_string(assessedState.maxMovesRemaining)});
+    RiddlesIOLogger::Log(STATE_ASSESSMENT_DONE, {std::to_string(as.maxMovesRemaining)});
 
-    return assessedState;
+    return as;
 }
 
 // TODO: Review if function behaves as expected
