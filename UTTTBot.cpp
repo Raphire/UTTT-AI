@@ -48,7 +48,7 @@ void UTTTBot::move(int timeout)
 
 	// Create line of code to create vector with input.
 	std::stringstream ss;
-	ss << "std::vector<std::string> lines = {";
+	ss << "lines = {";
 
 	// Input first line without comma.
 	ss << "\"" << inputLastRound[0] << "\"";
