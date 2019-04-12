@@ -82,14 +82,14 @@ namespace RatingDefinitions
     enum class MiniMax {
         Win = 1,
         Loose = -1,
-        Tie = 0
+        Undecided = 0
     };
 
     enum class Position {
         Any = -1,
         Winnable_for_both = 0,
         Winnable_for_one = 1,
-        Unwinnable = 2
+        Stalemate = 2
     };
 
     enum class TTTStrategies {

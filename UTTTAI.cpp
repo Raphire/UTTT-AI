@@ -108,10 +108,10 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> & moves, c
 
 int UTTTAI::EvaluateState(const State & state)
 {
-    Player winner = state.winner;           // Is there a winner?
-    if (winner == Player::None) return 0;	// No winner here.
-    if (winner == state.player) return +1;	// Bot has won in evaluated state.
-    return -1;                              // Opponent has won in evaluated state.
+    Player winner = state.winner; // Return scores defined in enum RatingDefinitions::MiniMax
+    if (winner == Player::None) return static_cast<int>(RatingDefinitions::MiniMax::Undecided);
+    if (winner == state.player) return static_cast<int>(RatingDefinitions::MiniMax::Win);
+    return static_cast<int>(RatingDefinitions::MiniMax::Loose);
 }
 
 std::vector<State> UTTTAI::GetChildStates(const State &state)
@@ -150,16 +150,20 @@ std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> & moves, co
         auto nextMoves = TTT::GetMoves(nextBoard);
         Player nextWinnableBy = TTT::IsWinnableForPlayer(nextBoard);
 
-        if(nextMoves.empty()) score = -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+        if(nextMoves.empty())
+            score = static_cast<int>(RatingDefinitions::Position::Any); // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
 
         // This board can still be won by both players, it is still of good use
-        else if(nextWinnableBy == Player::Both) score = 0;
+        else if(nextWinnableBy == Player::Both)
+            score = static_cast<int>(RatingDefinitions::Position::Winnable_for_both);
 
         // Someone can still win on this board, but sending the opponent here would be better than previous options
-        else if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) score = 1;
+        else if(nextWinnableBy == Player::X || nextWinnableBy == Player::O)
+            score = static_cast<int>(RatingDefinitions::Position::Winnable_for_one);
 
         // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-        else if(nextWinnableBy == Player::None) score = 2;
+        else if(nextWinnableBy == Player::None)
+            score = static_cast<int>(RatingDefinitions::Position::Stalemate);
 
         ratings.push_back(score);
     }
