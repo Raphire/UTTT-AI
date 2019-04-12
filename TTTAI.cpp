@@ -25,15 +25,12 @@ int TTTAI::RateMove(const AssessedState & assessedState, const Move & move)
     if(defendingMoves.size() == 1 && defendingMoves[0] == subMove)
         return static_cast<int>(RatingDefinitions::TTTStrategies::Prevent_Loose);
 
-    if(winningMoves.empty())
-    {
-        // The more potential wins this move sets up, the better it will be rated
-        score += std::count(playerSetupMoves.begin(), playerSetupMoves.end(), subMove);
-        // The more potential setups of the opponent this move blocks the better
-        score += std::count(otherSetupMoves.begin(), otherSetupMoves.end(), subMove);
-        // Blocking opponent wins is a priority, doing so reaps a higher score
-        score += 2 * std::count(defendingMoves.begin(), defendingMoves.end(), subMove);
-    }
+    // The more potential wins this move sets up, the better it will be rated
+    score += std::count(playerSetupMoves.begin(), playerSetupMoves.end(), subMove);
+    // The more potential setups of the opponent this move blocks the better
+    score += std::count(otherSetupMoves.begin(), otherSetupMoves.end(), subMove);
+    // Blocking opponent wins is a priority, doing so reaps a higher score
+    score += 2 * std::count(defendingMoves.begin(), defendingMoves.end(), subMove);
 
     return score;
 }
@@ -43,9 +40,9 @@ std::vector<int> TTTAI::GetWinningMoves(const Board &board, Player p)
     std::vector<int> moves;
 
     for (auto & win : TTT::wins)
-        if(board[win[0]] == p && board[win[1]] == p) moves.push_back(win[2]);
-        else if(board[win[1]] == p && board[win[2]] == p) moves.push_back(win[0]);
-        else if(board[win[0]] == p && board[win[2]] == p) moves.push_back(win[1]);
+        if(board[win[0]] == p && board[win[1]] == p && board[win[2]] == Player::None) moves.push_back(win[2]);
+        else if(board[win[0]] == Player::None && board[win[1]] == p && board[win[2]] == p) moves.push_back(win[0]);
+        else if(board[win[0]] == p && board[win[1]] == Player::None && board[win[2]] == p) moves.push_back(win[1]);
 
     return moves;
 }
