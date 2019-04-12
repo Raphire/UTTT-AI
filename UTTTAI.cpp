@@ -148,17 +148,18 @@ std::vector<int> UTTTAI::RateMovesByPosition(const std::vector<Move> & moves, co
         std::array<Player, 9> nextBoard = assessedState.state.subBoards[(move.x % 3) + 3 * (move.y % 3)];
 
         auto nextMoves = TTT::GetMoves(nextBoard);
-        if(nextMoves.empty()) score = -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
         Player nextWinnableBy = TTT::IsWinnableForPlayer(nextBoard);
 
+        if(nextMoves.empty()) score = -1; // Making this move gives the opponent the most options, as he gets the choice which micro board to play on
+
         // This board can still be won by both players, it is still of good use
-        if(nextWinnableBy == Player::Both) score = 0;
+        else if(nextWinnableBy == Player::Both) score = 0;
 
         // Someone can still win on this board, but sending the opponent here would be better than previous options
-        if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) score = 1;
+        else if(nextWinnableBy == Player::X || nextWinnableBy == Player::O) score = 1;
 
         // It would be ideal to force an opponent to move here, as this board is not of any use to anyone
-        if(nextWinnableBy == Player::None) score = 2;
+        else if(nextWinnableBy == Player::None) score = 2;
 
         ratings.push_back(score);
     }
