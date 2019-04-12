@@ -7,7 +7,7 @@ int TTTAI::RateMove(const AssessedState & assessedState, const Move & move)
     Board board = assessedState.state.subBoards[move.x / 3 + (move.y / 3) * 3];
     int subMove = move.x % 3 + (move.y % 3) * 3;
 
-    std::vector<int> moves = TTT::GetMoves(board);
+    std::vector<int> moves = TTTGame::GetMoves(board);
 
     std::vector<int> winningMoves = GetWinningMoves(board, assessedState.state.player);
     std::vector<int> defendingMoves = GetWinningMoves(board, assessedState.state.opponent);
@@ -39,7 +39,7 @@ std::vector<int> TTTAI::GetWinningMoves(const Board &board, Player p)
 {
     std::vector<int> moves;
 
-    for (auto & win : TTT::wins)
+    for (auto & win : TTTGame::wins)
         if(board[win[0]] == p && board[win[1]] == p && board[win[2]] == Player::None) moves.push_back(win[2]);
         else if(board[win[0]] == Player::None && board[win[1]] == p && board[win[2]] == p) moves.push_back(win[0]);
         else if(board[win[0]] == p && board[win[1]] == Player::None && board[win[2]] == p) moves.push_back(win[1]);
@@ -50,9 +50,9 @@ std::vector<int> TTTAI::GetWinningMoves(const Board &board, Player p)
 std::vector<int> TTTAI::GetSetupMoves(const Board &board, Player p)
 {
     std::vector<int> moves;
-    std::vector<int> cells = TTT::GetCellsOccupiedByPlayer(board, p);
+    std::vector<int> cells = TTTGame::GetCellsOccupiedByPlayer(board, p);
 
-    for (auto & win : TTT::wins)
+    for (auto & win : TTTGame::wins)
     {
         if(board[win[0]] == p && board[win[1]] == Player::None && board[win[2]] == Player::None)
         {

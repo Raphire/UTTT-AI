@@ -1,7 +1,7 @@
 #ifndef TTTAI_H
 #define TTTAI_H
 
-#include "TTT.h"
+#include "TTTGame.h"
 #include "UTTTAI.h"
 
 /// This class defines AI helper functions you could use in a regular game of Tic-Tac-Toe

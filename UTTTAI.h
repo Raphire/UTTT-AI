@@ -3,8 +3,8 @@
 
 #include <functional>
 
-#include "UTTT.h"
-#include "TTT.h"
+#include "UTTTGame.h"
+#include "TTTGame.h"
 
 struct AssessedState {
     /// The state that has been assessed.
@@ -56,17 +56,18 @@ public:
     /// Rates moves by short term consequences they might have, eliminates worst moves but very resource intensive
     static std::vector<int> RateMovesByMiniMaxAB(const std::vector<Move> & moves, const AssessedState & state);
 
+    /// Rates moves by the difference they might make in the macro-game (Only useful when moves are spread over multiple sub boards)
+    static std::vector<int> RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState);
+
     /// Rates moves by their feasibility in a regular game of Tic-Tac-Toe.
     static std::vector<int> RateMovesByTTTStrategies(const std::vector<Move> &moves, const AssessedState &state);
 
     /// Rates moves by the potential limits they might impose on the opponent.
-    static std::vector<int> RateMovesByPosition(const std::vector<Move> & moves, const AssessedState & state);
+    static std::vector<int> RateMovesByNextBoardWinnable(const std::vector<Move> &moves, const AssessedState &assessedState);
 
     /// Rates moves by the moves it might allow the opponent to make in their following moves.
-    static std::vector<int> RateMovesByNextBoardPosition(const std::vector<Move> & moves, const AssessedState & state);
+    static std::vector<int> RateMovesByNextBoardMacroRelevance(const std::vector<Move> &moves, const AssessedState &state);
 
-    /// Rates moves by the difference they might make in the macro-game
-    static std::vector<int> RateMovesByMacroRelevance(const std::vector<Move> & moves, const AssessedState & assessedState);
 
     /// Helper function used by MiniMaxAB algorithm.
     static int EvaluateState(const State & state);
@@ -80,21 +81,21 @@ public:
 namespace RatingDefinitions
 {
     enum class MiniMax {
-        Win = 1,
-        Loose = -1,
-        Undecided = 0
+        Win = 1,                // Branch should result in a win
+        Loose = -1,             // Branch should result in a loose condition
+        Undecided = 0           // Branch should result in a draw or branch outcome unknown
     };
 
-    enum class Position {
-        Any = -1,
-        Winnable_for_both = 0,
-        Winnable_for_one = 1,
-        Stalemate = 2
+    enum class NextBoardWinnable {
+        Any = -1,               // Next player gets to choose sub board
+        Winnable_for_both = 0,  // Sub board is still winnable for me and opponent
+        Winnable_for_one = 1,   // Either me or opponent can still win sub board
+        Stalemate = 2           // Neither player can win on sub board
     };
 
     enum class TTTStrategies {
-        Win = 100,
-        Prevent_Loose = 50
+        Win = 100,              // Move results in a win on sub board
+        Prevent_Loose = 50      // Move can directly prevent a loose condition on sub board
     };
 };
 

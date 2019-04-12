@@ -40,7 +40,7 @@ std::ostream &operator<<(std::ostream& os, const Move &m);
 std::ostream &operator<<(std::ostream& os, const std::array<int, 9> &vals);
 
 /// This class defines Ultimate Tic-Tac-Toe game-flow
-class UTTT {
+class UTTTGame {
 public:
     static State doMove(const State &state, const Move &m);
     static std::vector<Move> getMoves(const State &state);

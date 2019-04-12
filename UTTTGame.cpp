@@ -1,6 +1,6 @@
-#include "UTTT.h"
+#include "UTTTGame.h"
 
-#include "TTT.h"
+#include "TTTGame.h"
 
 std::ostream & operator << (std::ostream& os, const Player &p) {
 	if (p == Player::None) {
@@ -29,7 +29,7 @@ std::ostream & operator << (std::ostream &os, const std::array<int, 9> &vals)
 	return os;
 }
 
-State UTTT::doMove(const State &state, const Move &m)
+State UTTTGame::doMove(const State &state, const Move &m)
 {
     // Copy previous state.
 	State result = state;
@@ -45,7 +45,7 @@ State UTTT::doMove(const State &state, const Move &m)
 
 	result.subBoards[macroMove][subMove] = player;
 
-	if(TTT::GetWinner(result.subBoards[macroMove]) == player)
+	if(TTTGame::GetWinner(result.subBoards[macroMove]) == player)
 		result.macroBoard[macroMove] = player;
 
 	// If next player would've been sent to a finished TTT board...
@@ -61,7 +61,7 @@ State UTTT::doMove(const State &state, const Move &m)
 
 	// Check for a winner, don't bother before 9 rounds as a win needs 9 moves minimum.
 	if(result.round >= 9)
-		for (auto & win : TTT::wins)
+		for (auto & win : TTTGame::wins)
             if(result.macroBoard[win[0]] == player // Only the player making the move can be the winner of the resulting state.
 			&& result.macroBoard[win[0]] == result.macroBoard[win[1]]
 			&& result.macroBoard[win[1]] == result.macroBoard[win[2]])
@@ -76,7 +76,7 @@ State UTTT::doMove(const State &state, const Move &m)
 	return result; 
 }
 
-std::vector<Move> UTTT::getMoves(const State &state)
+std::vector<Move> UTTTGame::getMoves(const State &state)
 {
 	std::vector<Move> moves;
 	if (state.winner != Player::None) return moves;

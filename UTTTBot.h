@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "UTTT.h"
+#include "UTTTGame.h"
 
 /// This class handles communication between AI and the Riddles.io Ultimate Tic-Tac-Toe platform
 class UTTTBot {

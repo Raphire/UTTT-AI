@@ -1,12 +1,12 @@
 #ifndef TTT_H
 #define TTT_H
 
-#include "UTTT.h"
+#include "UTTTGame.h"
 
 using Board = std::array<Player, 9>;
 
 /// This class defines regular Tic-Tac-Toe game-flow and helper functions
-class TTT {
+class TTTGame {
 public:
     static int wins [8][3];
 

@@ -1,12 +1,12 @@
-#include "TTT.h"
+#include "TTTGame.h"
 
-int TTT::wins [8][3] = {
+int TTTGame::wins [8][3] = {
     {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
     {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
     {0, 4, 8}, {2, 4, 6}
 };
 
-Player TTT::GetWinner(const Board &b)
+Player TTTGame::GetWinner(const Board &b)
 {
     // Horizontal
     if(b[0] == b[1] && b[1] == b[2] && b[2] != Player::None) return b[0];
@@ -25,7 +25,7 @@ Player TTT::GetWinner(const Board &b)
     return  Player::None;
 }
 
-std::vector<int> TTT::GetMoves(const Board &b)
+std::vector<int> TTTGame::GetMoves(const Board &b)
 {
     std::vector<int> moves = {};
     if(GetWinner(b) != Player::None) return moves;
@@ -34,14 +34,14 @@ std::vector<int> TTT::GetMoves(const Board &b)
     return moves;
 }
 
-Board TTT::DoMove(const Board &b, int &m, const Player &p)
+Board TTTGame::DoMove(const Board &b, int &m, const Player &p)
 {
     Board newBoard = b;
     newBoard[m] = p;
     return newBoard;
 }
 
-Player TTT::IsWinnableForPlayer(const Board &b)
+Player TTTGame::IsWinnableForPlayer(const Board &b)
 {
     Player winner = GetWinner(b);
     if(winner != Player::None) return winner;
@@ -63,7 +63,7 @@ Player TTT::IsWinnableForPlayer(const Board &b)
 }
 
 
-std::vector<int> TTT::GetCellsOccupiedByPlayer(const Board & b, const Player & p)
+std::vector<int> TTTGame::GetCellsOccupiedByPlayer(const Board & b, const Player & p)
 {
     std::vector<int> cells;
     for(int c = 0; c < 9; c++)
@@ -73,7 +73,7 @@ std::vector<int> TTT::GetCellsOccupiedByPlayer(const Board & b, const Player & p
 }
 
 /// Returns 0 if board has been decided or no winning moves exist for given player
-int TTT::GetMinimumMovesToWin(const std::array<Player, 9> &board, const Player &player)
+int TTTGame::GetMinimumMovesToWin(const std::array<Player, 9> &board, const Player &player)
 {
     if(GetWinner(board) != Player::None) return 0;
 

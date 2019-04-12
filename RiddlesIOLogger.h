@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "UTTT.h"
+#include "UTTTGame.h"
 
 const int VISIBLE_LOG_LEVEL = 5;
 
