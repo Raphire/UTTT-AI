@@ -100,9 +100,9 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> & moves, c
 
     // Do some conditional logging.
     if(mms.getLastSearchFullyEvaluated())
-        RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED_ALL_EVALUATED, {std::to_string(mms.getLastSearchNumNodesTraversed()), std::to_string(((double) mms.getLastSearchNumNodesTraversed()) / timeElapsed)});
+        RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED_ALL_EVALUATED, {std::to_string(mms.getLastSearchNumNodesTraversed()), std::to_string(((double) mms.getLastSearchNumNodesTraversed()) / timeElapsed), std::to_string(mms.getLastSearchDepth())});
     else
-        RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED, {std::to_string(mms.getLastSearchNumNodesTraversed()), std::to_string(((double) mms.getLastSearchNumNodesTraversed()) / timeElapsed)});
+        RiddlesIOLogger::Log(MINIMAX_SEARCH_FINISHED, {std::to_string(mms.getLastSearchNumNodesTraversed()), std::to_string(((double) mms.getLastSearchNumNodesTraversed()) / timeElapsed), std::to_string(mms.getLastSearchDepth())});
 
     return ratings;
 }
@@ -118,7 +118,8 @@ int UTTTAI::EvaluateState(const State & state)
 std::vector<State> UTTTAI::GetChildStates(const State &state)
 {
     std::vector<State> children;
-    std::vector<Move> moves = UTTTGame::getMoves(state);
+    if(state.winner != Player::None) return children;
+    std::vector<Move> moves = UTTTAI::GetMiniMaxMoves(state);
 
     for (Move m : moves)
         children.push_back(UTTTGame::doMove(state, m));
@@ -302,6 +303,12 @@ std::vector<int> UTTTAI::RateMovesByMacroRelevance(const std::vector<Move> & mov
         ratings.push_back(assessedState.macroFieldWorthOffensive[macroBoardIndex] + assessedState.macroFieldWorthDefensive[macroBoardIndex]);
     }
     return ratings;
+}
+
+std::vector<Move> UTTTAI::GetMiniMaxMoves(const State &state)
+{
+    if(state.winsOpp > 0 || state.winsMe > 0) return UTTTGame::getMoves(state);
+    else return std::vector<Move>(0);
 }
 
 std::vector<int> BestRatingIndicesOfList(const std::vector<int> &vals)

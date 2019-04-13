@@ -15,12 +15,16 @@ enum class Player {
     X = 1,
     O = 0,
     Active = -1,
-    Both = 2
+    Both = 2,
+    Neither
 };
 
 struct State {
 	std::array<std::array<Player,9>,9> subBoards;
 	std::array<Player,9> macroBoard;
+	std::array<Player,9> subGamesWinnableBy = {{Player::Both}};
+	int winsMe = 8;
+	int winsOpp = 8;
 
 	Player turn = Player::O;
 	Player player, opponent;

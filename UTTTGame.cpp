@@ -1,5 +1,7 @@
 #include "UTTTGame.h"
 
+#include <algorithm>
+
 #include "TTTGame.h"
 
 std::ostream & operator << (std::ostream& os, const Player &p) {
@@ -49,12 +51,18 @@ State UTTTGame::doMove(const State &state, const Move &m)
 		result.macroBoard[macroMove] = player;
 
 	// If next player would've been sent to a finished TTT board...
-	if(result.macroBoard[subMove] == Player::X || result.macroBoard[subMove] == Player::O) {
+	if(result.macroBoard[subMove] == Player::X || result.macroBoard[subMove] == Player::O ||
+	std::find(result.subBoards[subMove].begin(), result.subBoards[subMove].end(), Player::None) == result.subBoards[subMove].end()) {
 	    // ... Set all unfinished sub-boards active.
         for (int i = 0; i < 9; i++)
             if (result.macroBoard[i] == Player::None) result.macroBoard[i] = Player::Active;
     } else // Set the board represented at player's sub-move position as active.
-        result.macroBoard[subMove] = Player::Active;
+	{
+		for(int s = 0; s < 9; s++)
+			if(result.macroBoard[s] == Player::Active)
+				result.macroBoard[s] = Player::None;
+		result.macroBoard[subMove] = Player::Active;
+	}
 
 	// Increment round after second player to move made a move.
 	if(player == Player::X) result.round++;
@@ -69,6 +77,37 @@ State UTTTGame::doMove(const State &state, const Move &m)
 				result.winner = player;
 				break;
 			}
+
+	// TODO: update subGamesWinnable and Gamewinnableby in UTTTBot Riddles hook
+
+	// Only try to update potential wins if opponent is affected (as only opponent can loose a potential win when bot is on move)
+	if(state.subGamesWinnableBy[macroMove] == Player::Both || state.subGamesWinnableBy[macroMove] == state.opponent) {
+		Player potentialSubWinner = TTTGame::IsWinnableForPlayer(result.subBoards[macroMove]);
+		if(potentialSubWinner != result.subGamesWinnableBy[macroMove]) { // Opponent can no longer win sub-board
+			result.subGamesWinnableBy[macroMove] = potentialSubWinner;
+			Player canWin = Player::None;
+			for (auto win : TTTGame::wins)
+			{
+				// If changed macro board is part of this win
+				if(win[0] == macroMove) {
+					if((state.subGamesWinnableBy[win[1]] == state.opponent || state.subGamesWinnableBy[win[1]] == Player::Both)
+					&& (state.subGamesWinnableBy[win[2]] == state.opponent || state.subGamesWinnableBy[win[2]] == Player::Both))
+						result.winsOpp--;
+				}
+				else if(win[1] == macroMove) {
+					if((state.subGamesWinnableBy[win[0]] == state.opponent || state.subGamesWinnableBy[win[0]] == Player::Both)
+					   && (state.subGamesWinnableBy[win[2]] == state.opponent || state.subGamesWinnableBy[win[2]] == Player::Both))
+						result.winsOpp--;
+				}
+				else if(win[2] == macroMove) {
+					if((state.subGamesWinnableBy[win[1]] == state.opponent || state.subGamesWinnableBy[win[1]] == Player::Both)
+					   && (state.subGamesWinnableBy[win[0]] == state.opponent || state.subGamesWinnableBy[win[0]] == Player::Both))
+						result.winsOpp--;
+				}
+			}
+
+		}
+	}
 
 	// Switch turns.
 	result.turn = state.turn == Player::O ? Player::X : Player::O;

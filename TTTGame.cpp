@@ -46,7 +46,7 @@ Player TTTGame::IsWinnableForPlayer(const Board &b)
     Player winner = GetWinner(b);
     if(winner != Player::None) return winner;
 
-    Player winnableBy = Player::None;
+    Player winnableBy = Player::Neither;
 
     // Check if each win pos can still be occupied by each player
     for (auto & win : wins)

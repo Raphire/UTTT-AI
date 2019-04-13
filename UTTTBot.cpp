@@ -70,7 +70,7 @@ void UTTTBot::update(std::string &key, std::string &value)
 		state.round = round;
 	} else if (key == "field") {
 		std::vector<std::string> fields = split(value, ',');
-		for(int r = 0; r < 9; r++) {
+		for (int r = 0; r < 9; r++) {
 			for (int c = 0; c < 9; c++) {
 				int macroBoard = c / 3 + 3 * (r / 3);
 				int subMove = c % 3 + (r % 3) * 3;
@@ -80,6 +80,25 @@ void UTTTBot::update(std::string &key, std::string &value)
 
 			}
 		}
+		for (int i = 0; i < 9; i++) {
+			if (state.macroBoard[i] == Player::X || state.macroBoard[i] == Player::O)
+				state.subGamesWinnableBy[i] = state.macroBoard[i];
+			else
+				state.subGamesWinnableBy[i] = TTTGame::IsWinnableForPlayer(state.subBoards[i]);
+		}
+		state.winsMe = 0; state.winsOpp = 0;
+		for(auto win : TTTGame::wins) {
+			if((state.subGamesWinnableBy[win[0]] == Player::X || state.subGamesWinnableBy[win[0]] == Player::Both)
+			&& (state.subGamesWinnableBy[win[1]] == Player::X || state.subGamesWinnableBy[win[1]] == Player::Both)
+			&& (state.subGamesWinnableBy[win[2]] == Player::X || state.subGamesWinnableBy[win[2]] == Player::Both))
+				state.player == Player::X ? state.winsMe++ : state.winsOpp++;
+			if((state.subGamesWinnableBy[win[0]] == Player::O || state.subGamesWinnableBy[win[0]] == Player::Both)
+		    && (state.subGamesWinnableBy[win[1]] == Player::O || state.subGamesWinnableBy[win[1]] == Player::Both)
+		    && (state.subGamesWinnableBy[win[2]] == Player::O || state.subGamesWinnableBy[win[2]] == Player::Both))
+				state.player == Player::O ? state.winsMe++ : state.winsOpp++;
+		}
+
+
 	} else if (key == "macroboard") {
 		std::vector<std::string> fields = split(value, ',');
 		for (int i = 0; i < 9; i++) {

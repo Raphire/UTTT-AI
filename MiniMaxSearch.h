@@ -21,6 +21,9 @@ public:
 
     /// Returns the amount of nodes (game states) that were traversed during the last search
     int getLastSearchNumNodesTraversed();
+
+    /// Returns depth the last search was aborted at
+    int getLastSearchDepth();
 private:
 
     /// Evaluates the outcome of a perfectly-played match by either player (when depth limit is infinite)
@@ -41,6 +44,7 @@ private:
 
     /// Internally used to keep track of algorithm performance
     int nodesTraversed;
+    int searchDepth = 2;
 
     /// Holds whether or not the last search done has been fully-completed (as depth-limit/timeout might abort alg prematurely
     bool fullSearchDone;
@@ -80,22 +84,27 @@ std::vector<int> MiniMaxSearch<Node>::evaluateBranchUntilTimeout(const Node &nod
     std::vector<Node> children = findChildNodes(node);
     std::vector<int> scores = std::vector<int>(children.size());
     std::vector<bool> isChildFullyEvaluated = std::vector<bool>(children.size(), false);
+    std::vector<int> searchDepths = std::vector<int>(children.size(), 0);
 
     int currentBranch = 0;
-    int depth = 2;
+    searchDepth = 3;
 
     do {
         // There's no need to evaluate this branch again if we already know its outcome
         if(!isChildFullyEvaluated[currentBranch])
         {
             fullSearchDone = true; // Reset full search done tracker
-            scores[currentBranch] = MiniMaxAB(children[currentBranch], depth, false, -1, 1); // Evaluate current branch
-            isChildFullyEvaluated[currentBranch] = fullSearchDone; // Keep track of fully evaluated branches to improve performance
+            scores[currentBranch] = MiniMaxAB(children[currentBranch], searchDepth, false, static_cast<int>(RatingDefinitions::MiniMax::Loose), static_cast<int>(RatingDefinitions::MiniMax::Win)); // Evaluate current branch
+            if(fullSearchDone || scores[currentBranch] != 0) {
+                isChildFullyEvaluated[currentBranch] = true; // Keep track of fully evaluated branches to improve performance
+                if(scores[currentBranch] == static_cast<int>(RatingDefinitions::MiniMax::Loose)) scores[currentBranch] += searchDepth;  // Rate closest win highest
+                if(scores[currentBranch] == static_cast<int>(RatingDefinitions::MiniMax::Win)) scores[currentBranch] -= searchDepth;    // Rate closest loose lowest
+            }
         }
         // Have all branches(moves) been evaluated for this depth?: Increase depth, reset branch pointer
         if(currentBranch == children.size() - 1)
         {
-            depth++;
+            searchDepth++;
             currentBranch = 0;
         }
         else currentBranch++;
@@ -166,6 +175,12 @@ template<class Node>
 int MiniMaxSearch<Node>::getLastSearchNumNodesTraversed()
 {
     return nodesTraversed;
+}
+
+template<class Node>
+int MiniMaxSearch<Node>::getLastSearchDepth()
+{
+    return searchDepth;
 }
 
 #endif

@@ -69,20 +69,18 @@ public:
     static std::vector<int> RateMovesByNextBoardMacroRelevance(const std::vector<Move> &moves, const AssessedState &state);
 
 
-    /// Helper function used by MiniMaxAB algorithm.
+    /// Helper functions used by MiniMaxAB algorithm.
     static int EvaluateState(const State & state);
-
-
-    /// Helper function used by MiniMaxAB algorithm.
-    static std::vector<State> GetChildStates(const State &state);
+    static std::vector<State> GetChildStates(const State & state);
+    static std::vector<Move> GetMiniMaxMoves(const State & state);
 
 };
 
 namespace RatingDefinitions
 {
     enum class MiniMax {
-        Win = 1,                // Branch should result in a win
-        Loose = -1,             // Branch should result in a loose condition
+        Win = 1000,                // Branch should result in a win
+        Loose = -1000,             // Branch should result in a loose condition
         Undecided = 0           // Branch should result in a draw or branch outcome unknown
     };
 
