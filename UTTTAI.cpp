@@ -11,6 +11,11 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
     auto turnStartTime = std::chrono::steady_clock::now();
     long long int timeElapsed;
 
+    if(state.winsOpp == 0 && state.winsMe == 0) {
+        RiddlesIOLogger::Log(MOVE_IRRELEVANT, {});
+        return UTTTGame::getMoves(state)[0];
+    }
+
     // Elimination stages used by bot from first to final.
     std::array<SelectionStage, 5> selectionStages =
             {
@@ -218,7 +223,6 @@ std::vector<int> UTTTAI::RateMovesByNextBoardMacroRelevance(const std::vector<Mo
     return ratings;
 }
 
-// TODO: Review if function behaves as expected
 AssessedState UTTTAI::AssessState(const State &state)
 {
     AssessedState as;

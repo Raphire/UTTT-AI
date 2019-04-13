@@ -82,6 +82,7 @@ std::vector<int> MiniMaxSearch<Node>::evaluateBranchUntilTimeout(const Node &nod
     nodesTraversed = 0;
 
     std::vector<Node> children = findChildNodes(node);
+    if(children.empty()) return std::vector<int>(0);
     std::vector<int> scores = std::vector<int>(children.size());
     std::vector<bool> isChildFullyEvaluated = std::vector<bool>(children.size(), false);
     std::vector<int> searchDepths = std::vector<int>(children.size(), 0);

@@ -52,6 +52,9 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
             Log(args[0], LogLevel::Info);
             Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
+        case MOVE_IRRELEVANT:
+            Log("Neither player can still win this match, i shouldn't risk a timeout by calculating anything more.", LogLevel::Info);
+            break;
         default:
             Log("Attempt to log unspecified message type.", LogLevel::Info);
             break;
