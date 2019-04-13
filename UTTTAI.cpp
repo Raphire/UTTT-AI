@@ -6,14 +6,15 @@
 #include "MiniMaxSearch.h"
 #include "TTTAI.h"
 
-Move UTTTAI::FindBestMove(const State &state, const int &timeout)
+Move UTTTAI::FindBestMove(const AssessedState & assessedState)
 {
     auto turnStartTime = std::chrono::steady_clock::now();
     long long int timeElapsed;
 
-    if(state.winsOpp == 0 && state.winsMe == 0) {
+    if(assessedState.state.winsOpp == 0 && assessedState.state.winsMe == 0)
+    {
         RiddlesIOLogger::Log(MOVE_IRRELEVANT, {});
-        return UTTTGame::getMoves(state)[0];
+        return UTTTGame::getMoves(assessedState.state)[0];
     }
 
     // Elimination stages used by bot from first to final.
@@ -41,11 +42,9 @@ Move UTTTAI::FindBestMove(const State &state, const int &timeout)
                     }
             };
 
-    std::vector<Move> moves = UTTTGame::getMoves(state);
+    std::vector<Move> moves = UTTTGame::getMoves(assessedState.state);
     std::vector<int> moveRatings;
     std::vector<Move> bestMoves = moves;
-
-    AssessedState assessedState = AssessState(state);
 
     // Edge cases.
     if (moves.empty()) RiddlesIOLogger::Log(ERROR_DO_MOVE_ON_FINISHED_GAME, {});
@@ -98,7 +97,7 @@ std::vector<int> UTTTAI::RateMovesByMiniMaxAB(const std::vector<Move> & moves, c
     MiniMaxSearch<State> mms = MiniMaxSearch<State>(EvaluateState, GetChildStates);
 
     // Use MiniMaxSearch to rate moves.
-    std::vector<int> ratings = mms.evaluateBranchUntilTimeout(state.state, state.state.time_per_move);
+    std::vector<int> ratings = mms.evaluateBranchUntilTimeout(state.state, state.timeoutSuggested);
 
     // Measure elapsed time for logging.
     timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
@@ -290,7 +289,11 @@ AssessedState UTTTAI::AssessState(const State &state)
             as.minMovesToLoose[w] = 0;
     }
 
-    RiddlesIOLogger::Log(STATE_ASSESSMENT_DONE, {std::to_string(as.maxMovesRemaining)});
+    // Step up search time when end-game closes in.
+    if(as.maxMovesRemaining < 30 && as.state.timeout > 10 * as.state.time_per_move) as.timeoutSuggested = 3 * as.state.time_per_move;
+    else as.timeoutSuggested = state.timeout;
+
+    RiddlesIOLogger::Log(STATE_ASSESSMENT_DONE, {std::to_string(as.maxMovesRemaining), std::to_string(as.timeoutSuggested)});
 
     return as;
 }

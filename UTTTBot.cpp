@@ -33,10 +33,14 @@ void UTTTBot::move(int timeout)
 	int turn = round*2-1;
     state.turn = state.player;
     this->timebank = timeout;
+    state.timeout = timeout;
+
     if(state.player == Player::X) turn++;
 	RiddlesIOLogger::Log(BEGIN_OF_SEARCH, {std::to_string(round), std::to_string(turn)});
 
-	Move m = UTTTAI::FindBestMove(state, time_per_move);
+	AssessedState assessedState = UTTTAI::AssessState(state);
+
+	Move m = UTTTAI::FindBestMove(assessedState);
 	std::cout << "place_disc " << m << std::endl;
 
 	std::vector<std::string> inputLastRound;

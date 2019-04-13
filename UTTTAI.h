@@ -36,6 +36,8 @@ struct AssessedState {
     /// Just use the factorial function on this number to get the maximum amount of states
     /// you have to evaluate to find how a perfectly played match from this state will end.
     int maxMovesRemaining;
+
+    int timeoutSuggested = 100;
 };
 
 struct SelectionStage {
@@ -47,7 +49,7 @@ class UTTTAI {
 
 public:
     /// Main move selection function.
-    static Move FindBestMove(const State &state, const int &timeout);
+    static Move FindBestMove(const AssessedState & assessedState);
 
     /// Gathers data from a game-state and pre-processes certain variables.
     static AssessedState AssessState(const State &state);

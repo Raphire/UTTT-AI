@@ -31,6 +31,7 @@ struct State {
 	int round = 1;
 	Player winner = Player::None;
 
+	int timeout;
     int time_per_move;
 
     State() {

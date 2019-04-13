@@ -17,7 +17,7 @@ void RiddlesIOLogger::Log(UTTTAIPredefinedMessageType type, std::vector<std::str
             Log("---------------------------------------------------------------------------------------", LogLevel::Info);
             break;
         case STATE_ASSESSMENT_DONE:
-            Log("Assessment of state completed, match should be over within " + args[0] + " moves. \n", LogLevel::Info);
+            Log("Assessment of state completed, match should be over within " + args[0] + " moves, suggested time per move: " + args[1] + ".\n", LogLevel::Info);
             break;
         case BEGIN_ELIMINATION_OF_MOVES:
             Log("Starting elimination of moves. (" + args[0] + " ms)", LogLevel::Info);
